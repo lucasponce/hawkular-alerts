@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Red Hat, Inc. and/or its affiliates
+ * Copyright 2015-2016 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +16,10 @@
  */
 package org.hawkular.alerts.bus.init;
 
+import static java.util.Arrays.asList;
+
+import static org.hawkular.alerts.bus.api.PublishCommandMessage.PUBLISH_COMMAND;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -26,6 +30,7 @@ import javax.ejb.EJB;
 import javax.ejb.Singleton;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
+import javax.inject.Inject;
 
 import org.hawkular.alerts.api.model.condition.AvailabilityCondition;
 import org.hawkular.alerts.api.model.condition.CompareCondition;
@@ -33,6 +38,8 @@ import org.hawkular.alerts.api.model.condition.Condition;
 import org.hawkular.alerts.api.services.DefinitionsEvent;
 import org.hawkular.alerts.api.services.DefinitionsListener;
 import org.hawkular.alerts.api.services.DefinitionsService;
+import org.hawkular.alerts.bus.api.PublishCommandMessage;
+import org.hawkular.alerts.bus.publish.PublishCommandSender;
 import org.jboss.logging.Logger;
 
 /**
@@ -45,6 +52,13 @@ import org.jboss.logging.Logger;
 @TransactionAttribute(value= TransactionAttributeType.NOT_SUPPORTED)
 public class CacheManager {
     private final Logger log = Logger.getLogger(CacheManager.class);
+
+    private final String AVAILABILITY = "availability";
+    private final String GAUGE = "gauge";
+    private final String COUNTER = "counter";
+    private final String COUNTER_RATE = "counter_rate";
+    private final String STRING = "string";
+    private final String GAUGE_RATE = "gauge_rate";
 
     //public static final String CACHE_KEY_TRIGGER_UPDATE_TIME = "HawkularAlerts:TriggerUpdateTime";
     //public static final String CACHE_KEY_CONDITION_UPDATE_TIME = "HawkularAlerts:ConditionUpdateTime";
@@ -60,6 +74,9 @@ public class CacheManager {
 
     @EJB
     DefinitionsService definitions;
+
+    @Inject
+    PublishCommandSender publishCommandSender;
 
     @PostConstruct
     public void init() {
@@ -117,11 +134,21 @@ public class CacheManager {
             for (Condition c : conditions) {
                 if (c instanceof AvailabilityCondition) {
                     availIds.add(c.getDataId());
+                    if (isNewAvailId(c.getDataId())) {
+                        publishCommand(c.getTenantId(), c.getDataId());
+                    }
                     continue;
                 }
                 dataIds.add(c.getDataId());
+                if (isNewDataId(c.getDataId())) {
+                    publishCommand(c.getTenantId(), c.getDataId());
+                }
                 if (c instanceof CompareCondition) {
-                    dataIds.add(((CompareCondition) c).getData2Id());
+                    String data2Id = ((CompareCondition) c).getData2Id();
+                    dataIds.add(data2Id);
+                    if (isNewDataId(data2Id)) {
+                        publishCommand(c.getTenantId(), data2Id);
+                    }
                 }
             }
         } catch (Exception e) {
@@ -140,4 +167,49 @@ public class CacheManager {
         }
     }
 
+    private boolean isNewAvailId(String availId) {
+        if (activeAvailabityIds == null) {
+            return true;
+        }
+        return !activeAvailabityIds.contains(availId);
+    }
+
+    private boolean isNewDataId(String dataId) {
+        if (activeDataIds == null) {
+            return true;
+        }
+        return !activeDataIds.contains(dataId);
+    }
+
+    private void publishCommand(String tenantId, String dataId) throws Exception {
+        String type;
+        String metricId;
+        if (dataId.startsWith(AVAILABILITY)) {
+            type = AVAILABILITY;
+            metricId = dataId.substring(AVAILABILITY.length() + 1);
+        } else if (dataId.startsWith(GAUGE)) {
+            type = GAUGE;
+            metricId = dataId.substring(GAUGE.length() + 1);
+        } else if (dataId.startsWith(COUNTER)) {
+            type = COUNTER;
+            metricId = dataId.substring(COUNTER.length() + 1);
+        } else if (dataId.startsWith(COUNTER_RATE)) {
+            type = COUNTER_RATE;
+            metricId = dataId.substring(COUNTER_RATE.length() + 1);
+        } else if (dataId.startsWith(STRING)) {
+            type = STRING;
+            metricId = dataId.substring(STRING.length() + 1);
+        } else if (dataId.startsWith(GAUGE_RATE)) {
+            type = GAUGE_RATE;
+            metricId = dataId.substring(GAUGE_RATE.length() + 1);
+        } else {
+            if (log.isDebugEnabled()) {
+                log.debug("DataId " + dataId + " doesn't have a valid metrics type. Skipping publishing command.");
+            }
+            return;
+        }
+        PublishCommandMessage msg = new PublishCommandMessage(PUBLISH_COMMAND, tenantId,
+                asList(new PublishCommandMessage.MetricKey(type, metricId)));
+        publishCommandSender.send(msg);
+    }
 }

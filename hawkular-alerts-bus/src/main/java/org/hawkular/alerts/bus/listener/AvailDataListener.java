@@ -55,6 +55,7 @@ import org.jboss.logging.Logger;
 @TransactionAttribute(value = TransactionAttributeType.NOT_SUPPORTED)
 public class AvailDataListener extends BasicMessageListener<AvailDataMessage> {
     private final Logger log = Logger.getLogger(AvailDataListener.class);
+    private final String AVAILABILITY = "availability";
 
     @EJB
     AlertsService alerts;
@@ -85,11 +86,12 @@ public class AvailDataListener extends BasicMessageListener<AvailDataMessage> {
         List<Data> alertData = null;
         Set<String> activeAvailabilityIds = cacheManager.getActiveAvailabilityIds();
         for (SingleAvail a : data) {
-            if (isNeeded(activeAvailabilityIds, a.getId())) {
+            String fullMetricId = AVAILABILITY + "-" + a.getId();
+            if (isNeeded(activeAvailabilityIds, fullMetricId)) {
                 if (null == alertData) {
                     alertData = new ArrayList<>(data.size());
                 }
-                alertData.add(Data.forAvailability(a.getTenantId(), a.getId(), a.getTimestamp(),
+                alertData.add(Data.forAvailability(a.getTenantId(), fullMetricId, a.getTimestamp(),
                         AvailabilityType.valueOf(a.getAvail())));
             }
         }

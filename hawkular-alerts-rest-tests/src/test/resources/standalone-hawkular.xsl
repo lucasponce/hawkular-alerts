@@ -58,6 +58,7 @@
       <jms-queue name="hawkular/metrics/availability/new" entries="java:/queue/hawkular/metrics/availability/new java:jboss/exported/queue/hawkular/metrics/availability/new"/>
       <jms-topic name="HawkularAvailData" entries="java:/topic/HawkularAvailData java:jboss/exported/topic/HawkularAvailData"/>
       <jms-topic name="HawkularMetricData" entries="java:/topic/HawkularMetricData java:jboss/exported/topic/HawkularMetricData"/>
+      <jms-queue name="MetricsPublish" entries="java:/queue/hawkular/metrics/publish"/>
     </xsl:copy>
   </xsl:template>
 
