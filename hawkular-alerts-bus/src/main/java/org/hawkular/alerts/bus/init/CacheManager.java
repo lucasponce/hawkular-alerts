@@ -53,12 +53,16 @@ public class CacheManager {
 
     // private final String ALERTING = "alerting";
 
-    private final String AVAILABILITY = "availability";
-    private final String GAUGE = "gauge";
-    private final String COUNTER = "counter";
-    private final String COUNTER_RATE = "counter_rate";
-    private final String STRING = "string";
-    private final String GAUGE_RATE = "gauge_rate";
+    /*
+        TODO These constants should be properly documented into hawkular clients
+             hawkular-client-ruby will need to update its logic for conditions
+     */
+    private final String AVAILABILITY = "hm_a_";
+    private final String GAUGE = "hm_g_";
+    private final String COUNTER = "hm_c_";
+    private final String COUNTER_RATE = "hm_cr_";
+    private final String STRING = "hm_s_";
+    private final String GAUGE_RATE = "hm_gr_";
 
     Set<DataIdKey> activeDataIds;
     Set<DataIdKey> activeAvailabityIds;
@@ -212,22 +216,22 @@ public class CacheManager {
         MetricType type;
         if (dataId.startsWith(AVAILABILITY)) {
             type = MetricType.AVAILABILITY;
-            metricId = dataId.substring(AVAILABILITY.length() + 1);
+            metricId = dataId.substring(AVAILABILITY.length());
         } else if (dataId.startsWith(GAUGE)) {
             type = MetricType.GAUGE;
-            metricId = dataId.substring(GAUGE.length() + 1);
+            metricId = dataId.substring(GAUGE.length());
         } else if (dataId.startsWith(COUNTER)) {
             type = MetricType.COUNTER;
-            metricId = dataId.substring(COUNTER.length() + 1);
+            metricId = dataId.substring(COUNTER.length());
         } else if (dataId.startsWith(COUNTER_RATE)) {
             type = MetricType.COUNTER_RATE;
-            metricId = dataId.substring(COUNTER_RATE.length() + 1);
+            metricId = dataId.substring(COUNTER_RATE.length());
         } else if (dataId.startsWith(STRING)) {
             type = MetricType.STRING;
-            metricId = dataId.substring(STRING.length() + 1);
+            metricId = dataId.substring(STRING.length());
         } else if (dataId.startsWith(GAUGE_RATE)) {
             type = MetricType.GAUGE_RATE;
-            metricId = dataId.substring(GAUGE_RATE.length() + 1);
+            metricId = dataId.substring(GAUGE_RATE.length());
         } else {
             if (log.isDebugEnabled()) {
                 log.debug("DataId " + dataId + " doesn't have a valid metrics type.");
