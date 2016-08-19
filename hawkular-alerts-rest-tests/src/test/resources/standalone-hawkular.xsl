@@ -42,6 +42,9 @@
       <local-cache name="triggers"/>
       <local-cache name="data"/>
     </cache-container>
+    <cache-container name="hawkular-metrics" default-cache="publish" statistics-enabled="true">
+      <local-cache name="publish"/>
+    </cache-container>
   </xsl:template>
 
   <xsl:template match="//*[*[local-name()='in-vm-acceptor']]">
