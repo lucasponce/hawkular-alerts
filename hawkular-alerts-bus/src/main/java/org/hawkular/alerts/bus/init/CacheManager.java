@@ -35,6 +35,8 @@ import org.hawkular.alerts.api.model.condition.AvailabilityCondition;
 import org.hawkular.alerts.api.model.condition.CompareCondition;
 import org.hawkular.alerts.api.model.condition.Condition;
 import org.hawkular.alerts.api.services.DefinitionsService;
+import org.hawkular.alerts.api.services.PropertiesService;
+import org.hawkular.alerts.bus.log.MsgLogger;
 import org.hawkular.metrics.model.MetricId;
 import org.hawkular.metrics.model.MetricType;
 import org.infinispan.Cache;
@@ -50,8 +52,12 @@ import org.jboss.logging.Logger;
 @TransactionAttribute(value= TransactionAttributeType.NOT_SUPPORTED)
 public class CacheManager {
     private final Logger log = Logger.getLogger(CacheManager.class);
+    private final MsgLogger msgLog = MsgLogger.LOGGER;
 
-    // private final String ALERTING = "alerting";
+    private final String DISABLE_PUBLISH_FILTERING = "hawkular-alerts.disable-publish-filtering";
+    private final String DISABLE_PUBLISH_FILTERING_ENV = "DISABLE_PUBLISH_FILTERING";
+    private final String RESET_PUBLISH_CACHE = "hawkular-alerts.reset-publish-cache";
+    private final String RESET_PUBLISH_CACHE_ENV = "RESET_PUBLISH_CACHE";
 
     /*
         TODO These constants should be properly documented into hawkular clients
@@ -68,6 +74,9 @@ public class CacheManager {
     Set<DataIdKey> activeAvailabityIds;
 
     @EJB
+    PropertiesService properties;
+
+    @EJB
     DefinitionsService definitions;
 
     @Resource(lookup = "java:jboss/infinispan/cache/hawkular-metrics/publish")
@@ -75,8 +84,21 @@ public class CacheManager {
 
     @PostConstruct
     public void init() {
-        updateActiveIds();
-        definitions.registerListener(e -> { updateActiveIds(); }, CONDITION_CHANGE, TRIGGER_REMOVE);
+        if (!Boolean.parseBoolean(properties.getProperty(DISABLE_PUBLISH_FILTERING,
+                DISABLE_PUBLISH_FILTERING_ENV,
+                "false"))) {
+            if (Boolean.parseBoolean(properties.getProperty(RESET_PUBLISH_CACHE,
+                    RESET_PUBLISH_CACHE_ENV,
+                    "true"))) {
+                msgLog.warnClearPublishCache();
+                publishCache.clear();
+            }
+            msgLog.infoInitPublishCache();
+            updateActiveIds();
+            definitions.registerListener(e -> { updateActiveIds(); }, CONDITION_CHANGE, TRIGGER_REMOVE);
+        } else {
+            msgLog.warnDisabledPublishCache();
+        }
     }
 
     public Set<DataIdKey> getActiveDataIds() {
@@ -161,6 +183,9 @@ public class CacheManager {
             /*
                 This logic assumes that alerting is the only writer for the shared publishCache
              */
+            if (log.isDebugEnabled()) {
+                log.debug("Publishing metricId: " + metricId);
+            }
             publishCache.put(metricId, metricId);
             /*
                 This alternative logic assumes that more writers can add/remove entries into the shared publishCache.
@@ -188,6 +213,9 @@ public class CacheManager {
             /*
                 This logic assumes that alerting is the only writer for the shared publishCache
              */
+            if (log.isDebugEnabled()) {
+                log.debug("Unpublishing metricId: " + metricId);
+            }
             publishCache.remove(metricId);
             /*
                 This alternative logic assumes that more writers can add/remove entries into the shared publishCache.
