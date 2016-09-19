@@ -77,7 +77,10 @@ public class AlertsCriteria {
     }
 
     /**
-     * @param startResolvedTime fetched Alerts must have resolvedTime greater than or equal to startResolvedTime
+     * @param startResolvedTime fetched Alerts must have at least one resolvedTime in the lifecycle greater than or
+     *                          equal to startResolvedTime.
+     *                          Alerts lifecycle might involve several transitions between ACKNOWLEDGE and RESOLVE
+     *                          states.
      */
     public void setStartResolvedTime(Long startResolvedTime) {
         this.startResolvedTime = startResolvedTime;
@@ -88,7 +91,9 @@ public class AlertsCriteria {
     }
 
     /**
-     * @param endResolvedTime fetched Alerts must have resolvedTime less than or equal to endResolvedTime
+     * @param endResolvedTime fetched Alerts must have at least one resolvedTime in the lifecycle less than or equal to
+     *                        endResolvedTime.
+     *                        Alerts lifecycle might involve several transitions between ACKNOWLEDGE and RESOLVE states.
      */
     public void setEndResolvedTime(Long endResolvedTime) {
         this.endResolvedTime = endResolvedTime;
@@ -99,7 +104,9 @@ public class AlertsCriteria {
     }
 
     /**
-     * @param startAckTime fetched Alerts must have ackTime greater than or equal to startAckTime
+     * @param startAckTime fetched Alerts must have at least one ackTime in the lifecycle greater than or equal to
+     *                     startAckTime.
+     *                     Alerts lifecycle might involve several transitions between ACKNOWLEDGE and RESOLVE states.
      */
     public void setStartAckTime(Long startAckTime) {
         this.startAckTime = startAckTime;
@@ -110,7 +117,9 @@ public class AlertsCriteria {
     }
 
     /**
-     * @param endAckTime fetched Alerts must have ackTime less than or equal to endAckTime
+     * @param endAckTime fetched Alerts must have at least one ackTime in the lifecycle less than or equal to
+     *                   endAckTime.
+     *                   Alerts lifecycle might involve several transitions between ACKNOWLEDGE and RESOLVE states.
      */
     public void setEndAckTime(Long endAckTime) {
         this.endAckTime = endAckTime;

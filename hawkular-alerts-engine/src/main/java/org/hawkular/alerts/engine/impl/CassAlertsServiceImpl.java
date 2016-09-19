@@ -1513,7 +1513,7 @@ public class CassAlertsServiceImpl implements AlertsService {
             }
             futures.add(session.executeAsync(insertAlertStatus.bind(alert.getTenantId(), alert.getAlertId(), alert
                     .getStatus().name())));
-            Alert.LifeCycle lifecycle = alert.lastLifecycle();
+            Alert.LifeCycle lifecycle = alert.getCurrentLifecycle();
             if (lifecycle != null) {
                 futures.add(session.executeAsync(insertAlertLifecycle.bind(alert.getTenantId(), alert.getAlertId(),
                         lifecycle.getStatus().name(), lifecycle.getStime())));

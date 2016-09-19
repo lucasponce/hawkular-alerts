@@ -60,10 +60,10 @@ public class Alert extends Event {
     private String resolvedBy;
 
     @JsonInclude(Include.NON_EMPTY)
-    private List<Note> notes;
+    private List<Note> notes = new ArrayList<>();;
 
     @JsonInclude(Include.NON_EMPTY)
-    private List<LifeCycle> lifecycle;
+    private List<LifeCycle> lifecycle = new ArrayList<>();
 
     @JsonInclude(Include.NON_EMPTY)
     @Thin
@@ -88,6 +88,7 @@ public class Alert extends Event {
         this.status = Status.OPEN;
         this.severity = trigger.getSeverity();
         this.eventType = EventType.ALERT.name();
+        addLifecycle(this.status, "system", this.ctime);
     }
 
     @JsonIgnore
@@ -161,9 +162,6 @@ public class Alert extends Event {
     }
 
     public List<Note> getNotes() {
-        if (null == notes) {
-            this.notes = new ArrayList<>();
-        }
         return notes;
     }
 
@@ -185,9 +183,6 @@ public class Alert extends Event {
     }
 
     public List<LifeCycle> getLifecycle() {
-        if (null == lifecycle) {
-            this.lifecycle = new ArrayList<>();
-        }
         return lifecycle;
     }
 
@@ -202,7 +197,8 @@ public class Alert extends Event {
         getLifecycle().add(new LifeCycle(status, user, stime));
     }
 
-    public LifeCycle lastLifecycle() {
+    @JsonIgnore
+    public LifeCycle getCurrentLifecycle() {
         if (getLifecycle().isEmpty()) {
             return null;
         }
