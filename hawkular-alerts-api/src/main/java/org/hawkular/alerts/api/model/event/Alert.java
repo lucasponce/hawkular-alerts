@@ -47,18 +47,6 @@ public class Alert extends Event {
     @JsonInclude
     private Status status;
 
-    @JsonInclude
-    private long ackTime;
-
-    @JsonInclude
-    private String ackBy;
-
-    @JsonInclude
-    private long resolvedTime;
-
-    @JsonInclude
-    private String resolvedBy;
-
     @JsonInclude(Include.NON_EMPTY)
     private List<Note> notes = new ArrayList<>();;
 
@@ -121,38 +109,6 @@ public class Alert extends Event {
         this.status = status;
     }
 
-    public long getAckTime() {
-        return ackTime;
-    }
-
-    public void setAckTime(long ackTime) {
-        this.ackTime = ackTime;
-    }
-
-    public String getAckBy() {
-        return ackBy;
-    }
-
-    public void setAckBy(String ackBy) {
-        this.ackBy = ackBy;
-    }
-
-    public long getResolvedTime() {
-        return resolvedTime;
-    }
-
-    public void setResolvedTime(long resolvedTime) {
-        this.resolvedTime = resolvedTime;
-    }
-
-    public String getResolvedBy() {
-        return resolvedBy;
-    }
-
-    public void setResolvedBy(String resolvedBy) {
-        this.resolvedBy = resolvedBy;
-    }
-
     public List<Set<ConditionEval>> getResolvedEvalSets() {
         return resolvedEvalSets;
     }
@@ -194,6 +150,7 @@ public class Alert extends Event {
         if (status == null || user == null) {
             throw new IllegalArgumentException("Lifecycle must have non-null state and user");
         }
+        setStatus(status);
         getLifecycle().add(new LifeCycle(status, user, stime));
     }
 
@@ -207,11 +164,14 @@ public class Alert extends Event {
 
     @Override
     public String toString() {
-        return "Alert [alertId=" + id + ", status=" + status + ", ackTime=" + ackTime
-                + ", ackBy=" + ackBy + ", resolvedTime=" + resolvedTime + ", resolvedBy=" + resolvedBy + ", context="
-                + getContext() + "]";
+        return "Alert{" +
+                "severity=" + severity +
+                ", status=" + status +
+                ", notes=" + notes +
+                ", lifecycle=" + lifecycle +
+                ", resolvedEvalSets=" + resolvedEvalSets +
+                '}';
     }
-
 
     public static class Note {
         @JsonInclude(Include.NON_EMPTY)

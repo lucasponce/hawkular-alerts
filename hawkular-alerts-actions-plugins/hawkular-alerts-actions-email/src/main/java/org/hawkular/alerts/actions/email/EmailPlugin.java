@@ -302,9 +302,9 @@ public class EmailPlugin implements ActionPluginListener {
             if (alert.getStatus().equals(Status.OPEN)) {
                 email.setSentDate(new Date(alert.getCtime()));
             } else if (alert.getStatus().equals(Status.ACKNOWLEDGED)) {
-                email.setSentDate(new Date(alert.getAckTime()));
+                email.setSentDate(new Date(alert.getCurrentLifecycle().getStime()));
             } else {
-                email.setSentDate(new Date(alert.getResolvedTime()));
+                email.setSentDate(new Date(alert.getCurrentLifecycle().getStime()));
             }
         } else {
             email.setSentDate(new Date());
