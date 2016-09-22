@@ -18,6 +18,7 @@ package org.hawkular.alerts.api.model.event;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Set;
 
 import org.hawkular.alerts.api.model.Severity;
@@ -160,6 +161,38 @@ public class Alert extends Event {
             return null;
         }
         return getLifecycle().get(getLifecycle().size() - 1);
+    }
+
+    @JsonIgnore
+    public Long getLastStatusTime(Status status) {
+        if (getLifecycle().isEmpty()) {
+            return null;
+        }
+        Long statusTime = null;
+        ListIterator<LifeCycle> iterator = getLifecycle().listIterator(getLifecycle().size());
+        while (iterator.hasPrevious()) {
+            LifeCycle lifeCycle = iterator.previous();
+            if (lifeCycle.getStatus().equals(status)) {
+                statusTime = lifeCycle.getStime();
+                break;
+            }
+        }
+        return statusTime;
+    }
+
+    @JsonIgnore
+    public Long getLastOpenTime() {
+        return getLastStatusTime(Status.OPEN);
+    }
+
+    @JsonIgnore
+    public Long getLastAckTime() {
+        return getLastStatusTime(Status.ACKNOWLEDGED);
+    }
+
+    @JsonIgnore
+    public Long getLastResolvedTime() {
+        return getLastStatusTime(Status.RESOLVED);
     }
 
     @Override

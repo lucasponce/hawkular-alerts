@@ -199,6 +199,8 @@ public class JsonTest {
         assertEquals(Alert.Status.OPEN, alert.getCurrentLifecycle().getStatus());
         assertEquals("system", alert.getCurrentLifecycle().getUser());
         assertEquals(1, alert.getCurrentLifecycle().getStime());
+        assertNotNull(alert.getLastOpenTime());
+        assertEquals(1, alert.getLastOpenTime().longValue());
         assertEquals("trigger-test", alert.getText());
 
         /*
