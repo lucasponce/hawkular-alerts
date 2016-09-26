@@ -289,11 +289,11 @@ public class EmailPlugin implements ActionPluginListener {
         Status status = alert != null && alert.getStatus() != null ? alert.getStatus() : Status.OPEN;
         String statusStr = status.name().toLowerCase();
 
-        String from = props.get(PROP_FROM + "" + statusStr);
+        String from = props.get(PROP_FROM + "." + statusStr);
         from = from == null ? props.get(PROP_FROM) : from;
         from = from == null ? DEFAULT_FROM : from;
 
-        String fromName = props.get(PROP_FROM_NAME + "" + statusStr);
+        String fromName = props.get(PROP_FROM_NAME + "." + statusStr);
         fromName = fromName == null ? props.get(PROP_FROM_NAME) : fromName;
         fromName = fromName == null ? DEFAULT_FROM_NAME : fromName;
 
@@ -317,14 +317,14 @@ public class EmailPlugin implements ActionPluginListener {
             }
         }
 
-        String to = props.get(PROP_TO + "" + statusStr);
+        String to = props.get(PROP_TO + "." + statusStr);
         to = to == null ? props.get(PROP_TO) : to;
         if (to != null && !to.isEmpty()) {
             Address toAddress = new InternetAddress(to);
             email.addRecipient(Message.RecipientType.TO, toAddress);
         }
 
-        String ccs = props.get(PROP_CC + "" + statusStr);
+        String ccs = props.get(PROP_CC + "." + statusStr);
         ccs = ccs == null ? props.get(PROP_CC) : ccs;
         if (ccs != null && !ccs.isEmpty()) {
             String[] multipleCc = ccs.split(",");

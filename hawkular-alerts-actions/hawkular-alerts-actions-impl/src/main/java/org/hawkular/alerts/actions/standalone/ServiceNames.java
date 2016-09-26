@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Helper class to determine the JNDI name of a scpecific service
+ * Helper class to determine the JNDI name of a specific service
  *
  * @author Jay Shaughnessy
  * @author Lucas Ponce
