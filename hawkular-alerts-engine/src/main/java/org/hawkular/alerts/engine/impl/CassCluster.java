@@ -157,7 +157,9 @@ public class CassCluster {
     public void initCassCluster() {
         readProperties();
 
-        distributed = cacheManager.getTransport() != null;
+        if (cacheManager != null) {
+            distributed = cacheManager.getTransport() != null;
+        }
 
         int currentAttempts = attempts;
 
