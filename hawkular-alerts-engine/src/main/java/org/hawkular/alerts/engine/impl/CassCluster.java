@@ -58,7 +58,7 @@ import com.google.common.io.CharStreams;
 @Startup
 @Singleton
 public class CassCluster {
-    private static final Logger log = Logger.getLogger(CassDefinitionsServiceImpl.class);
+    private static final Logger log = Logger.getLogger(CassCluster.class);
     private static final String ALERTS_CASSANDRA_PORT = "hawkular-alerts.cassandra-cql-port";
     private static final String ALERTS_CASSANDRA_PORT_ENV = "CASSANDRA_CQL_PORT";
     private static final String ALERTS_CASSANDRA_NODES = "hawkular-alerts.cassandra-nodes";
