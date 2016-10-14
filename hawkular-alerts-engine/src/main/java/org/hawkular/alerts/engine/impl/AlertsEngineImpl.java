@@ -453,7 +453,8 @@ public class AlertsEngineImpl implements AlertsEngine, PartitionTriggerListener,
             Iterator<MissingState> it = missingStates.iterator();
             while (it.hasNext()) {
                 MissingState missingState = it.next();
-                if (missingState.getTriggerId().equals(triggerId)) {
+                if (missingState.getTenantId().equals(trigger.getTenantId()) &&
+                        missingState.getTriggerId().equals(triggerId)) {
                     it.remove();
                 }
             }

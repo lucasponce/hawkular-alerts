@@ -1914,7 +1914,6 @@ public class RulesEngineTest {
         rulesEngine.removeFact(missingState);
 
         // It simulates that we have not data in 4 seconds > of 3 seconds interval defined
-        missingState.setPreviousTime(missingState.getTime());
         missingState.setTime(missingState.getTime() + 4000);
 
         rulesEngine.addFact(missingState);
@@ -1931,7 +1930,6 @@ public class RulesEngineTest {
         rulesEngine.removeFact(missingState);
 
         // It simulates that we have not data in 4 seconds > of 3 seconds interval defined
-        missingState.setPreviousTime(missingState.getTime());
         missingState.setTime(missingState.getTime() + 4000);
 
         rulesEngine.addFact(missingState);
@@ -1959,7 +1957,6 @@ public class RulesEngineTest {
         rulesEngine.removeFact(missingState);
 
         // It simulates that we have not data in 4 seconds > of 3 seconds interval defined
-        missingState.setPreviousTime(missingState.getTime());
         missingState.setTime(missingState.getTime() + 4000);
 
         rulesEngine.addFact(missingState);
