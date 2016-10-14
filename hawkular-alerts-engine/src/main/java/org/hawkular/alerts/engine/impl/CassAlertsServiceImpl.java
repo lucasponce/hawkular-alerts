@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.ejb.Asynchronous;
 import javax.ejb.EJB;
 import javax.ejb.Local;
 import javax.ejb.Stateless;
@@ -1577,16 +1578,19 @@ public class CassAlertsServiceImpl implements AlertsService {
     }
 
     @Override
+    @Asynchronous
     public void sendData(Data data) throws Exception {
         sendData(Collections.singleton(data), false);
     }
 
     @Override
+    @Asynchronous
     public void sendData(Collection<Data> data) throws Exception {
         sendData(data, false);
     }
 
     @Override
+    @Asynchronous
     public void sendData(Collection<Data> data, boolean ignoreFiltering) throws Exception {
         if (isEmpty(data)) {
             return;
@@ -1631,6 +1635,7 @@ public class CassAlertsServiceImpl implements AlertsService {
     }
 
     @Override
+    @Asynchronous
     public void addEvents(Collection<Event> events) throws Exception {
         if (null == events || events.isEmpty()) {
             return;
@@ -1640,6 +1645,7 @@ public class CassAlertsServiceImpl implements AlertsService {
     }
 
     @Override
+    @Asynchronous
     public void sendEvent(Event event) throws Exception {
         if (null == event) {
             return;
@@ -1648,12 +1654,14 @@ public class CassAlertsServiceImpl implements AlertsService {
     }
 
     @Override
+    @Asynchronous
     public void sendEvents(Collection<Event> events) throws Exception {
 
         sendEvents(events, false);
     }
 
     @Override
+    @Asynchronous
     public void sendEvents(Collection<Event> events, boolean ignoreFiltering) throws Exception {
         if (isEmpty(events)) {
             return;
