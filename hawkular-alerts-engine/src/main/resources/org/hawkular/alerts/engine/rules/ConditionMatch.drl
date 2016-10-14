@@ -26,6 +26,8 @@ import org.hawkular.alerts.api.model.condition.ExternalCondition;
 import org.hawkular.alerts.api.model.condition.ExternalConditionEval;
 import org.hawkular.alerts.api.model.condition.EventCondition;
 import org.hawkular.alerts.api.model.condition.EventConditionEval;
+import org.hawkular.alerts.api.model.condition.MissingCondition;
+import org.hawkular.alerts.api.model.condition.MissingConditionEval;
 import org.hawkular.alerts.api.model.condition.StringCondition;
 import org.hawkular.alerts.api.model.condition.StringConditionEval;
 import org.hawkular.alerts.api.model.condition.ThresholdCondition;
@@ -46,6 +48,7 @@ import org.hawkular.alerts.api.model.trigger.Trigger;
 import org.hawkular.alerts.api.model.trigger.TriggerAction;
 import org.hawkular.alerts.api.services.ActionsService;
 import org.hawkular.alerts.engine.util.CompareData;
+import org.hawkular.alerts.engine.util.MissingState;
 import org.hawkular.alerts.engine.util.RateData;
 
 import org.jboss.logging.Logger;
@@ -54,7 +57,8 @@ import java.util.ArrayList;
 import java.util.Set;
 import java.util.List;
 import java.util.Map;
-import org.hawkular.alerts.engine.util.ActionsValidator;
+import org.hawkular.alerts.engine.util.ActionsValidator
+import org.hawkular.alerts.engine.util.MissingState;
 
 global Logger log;
 global ActionsService actions;
@@ -63,7 +67,7 @@ global List events;
 global Set pendingTimeouts;
 global Map autoResolvedTriggers;
 global Set disabledTriggers;
-
+global Set missingStates
 
 ////// CONDITION MATCHING
 //
@@ -260,6 +264,48 @@ rule Rate
         insert( ce );
 end
 
+// Use a higher salience here to ensure that MissingState is always updated before Missing performs the evaluation
+rule UpdateMissingStateFromData
+    salience 100
+    when
+        $md : MissingState( $tenantId : tenantId, $tsource : source, $did : dataId, $time : time )
+        $d  : Data( tenantId == $tenantId, source == $tsource, id == $did)
+   then
+        $md.setPreviousTime($d.getTimestamp());
+        $md.setTime($d.getTimestamp());
+        if (log != null && log.isDebugEnabled()) {
+            log.debugf("UpdateMissingStateFromData: %s ", $md);
+        }
+        retract( $md )
+end
+
+rule UpdateMissingStateFromEvent
+    salience 100
+    when
+        $md : MissingState( $tenantId : tenantId, $tsource : source, $did : dataId, $time : time )
+        $e  : Event( tenantId == $tenantId, dataSource == $tsource, dataId == $did)
+    then
+        $md.setPreviousTime($e.getCtime());
+        $md.setTime($e.getCtime());
+        if (log != null && log.isDebugEnabled()) {
+            log.debugf("UpdateMissingStateFromEvent: %s ", $md);
+        }
+        retract( $md )
+end
+
+rule Missing
+    when
+        $t : Trigger( $tenantId : tenantId, $tid : id, $tmode : mode, $tsource : source )
+        $c  : MissingCondition ( tenantId == $tenantId, triggerId == $tid, triggerMode == $tmode, $did : dataId )
+        $md : MissingState( tenantId == $tenantId, source == $tsource, dataId == $did, previousTime < time )
+    then
+        MissingConditionEval ce = new MissingConditionEval($c, $md.getPreviousTime(), $md.getTime());
+        if (log != null && log.isDebugEnabled()) {
+            log.debugf("Missing Eval: %s %s", (ce.isMatch() ? "Match!" : "no match"), ce.getLog());
+        }
+        retract( $md )
+        insert( ce );
+end
 
 // Data retraction rules
 // These rules are expected to fire after any Eval rules, due to their simplicity.  Note that Data is not retracted
