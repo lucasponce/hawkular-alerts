@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Red Hat, Inc. and/or its affiliates
+ * Copyright 2015-2016 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,6 +50,8 @@ public class DroolsRulesEngineImpl implements RulesEngine {
     // private final MsgLogger msgLog = MsgLogger.LOGGER;
     private final Logger log = Logger.getLogger(DroolsRulesEngineImpl.class);
     private static final String SESSION_NAME = "hawkular-alerts-engine-session";
+    private static final long PERF_FILTERING_THRESHOLD= 3000L; // 3 seconds
+    private static final long PERF_FIRING_THRESHOLD = 5000L; // 5 seconds
 
     private KieServices ks;
     private KieContainer kc;
@@ -155,20 +157,18 @@ public class DroolsRulesEngineImpl implements RulesEngine {
         // execution of the rules.  So, if we find multiple Data instances for the same Id, defer all but
         // the oldest to a subsequent run. Note that pendingData is already sorted by (id ASC, timestamp ASC) so
         // the iterator will present Data with the same id together, and time-ordered.
-        log.debug("firing rules...");
+        int initialPendingData = pendingData.size();
+        int initialPendingEvents = pendingEvents.size();
+        log.debugf("Firing rules... PendingData [%s] PendingEvents [%s]", initialPendingData, initialPendingEvents);
         int fireCycle = 0;
+        long startFiring = System.currentTimeMillis();
         while (!pendingData.isEmpty() || !pendingEvents.isEmpty()) {
-
-            if (log.isDebugEnabled()) {
-                log.debug("Data found. Firing rules on [" + pendingData.size() + "] datums and " +
-                        "[" + pendingEvents.size() + "] events.");
-            }
-
-            TreeSet<Data> batchData = new TreeSet<Data>(pendingData);
+            TreeSet<Data> batchData = new TreeSet<>(pendingData);
             Data previousData = null;
 
             pendingData.clear();
 
+            long startFiltering = System.currentTimeMillis();
             for (Data data : batchData) {
                 if (null == previousData || !data.getId().equals(previousData.getId())) {
                     kSession.insert(data);
@@ -181,6 +181,12 @@ public class DroolsRulesEngineImpl implements RulesEngine {
                                 "processed");
                     }
                 }
+            }
+            long filteringTime = System.currentTimeMillis() - startFiltering;
+            log.debugf("Filtering BatchData [%s] took [%s]", batchData.size(), filteringTime);
+            if (filteringTime > PERF_FILTERING_THRESHOLD) {
+                log.warnf("Filtering Filtering BatchData [%s] took [%s] ms exceeding [%s] ms",
+                        batchData.size(), filteringTime, PERF_FILTERING_THRESHOLD);
             }
 
             if (!pendingData.isEmpty() && log.isDebugEnabled()) {
@@ -219,6 +225,14 @@ public class DroolsRulesEngineImpl implements RulesEngine {
 
             kSession.fireAllRules();
             fireCycle++;
+        }
+        long firingTime = System.currentTimeMillis() - startFiring;
+        if (log.isDebugEnabled()) {
+            log.debugf("Firing took [%s] ms", firingTime);
+        }
+        if (firingTime > PERF_FIRING_THRESHOLD) {
+            log.warnf("Firing rules... PendingData [%s] PendingEvents [%s] took [%s] msexceeding [%s] ms",
+                    initialPendingData, initialPendingEvents, firingTime, PERF_FIRING_THRESHOLD);
         }
     }
 
