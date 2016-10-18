@@ -75,10 +75,10 @@ public interface PartitionManager {
     /**
      * Show additional information about partition status.
      * In distributed scenarios
-     *  - getStatus().get("currentNode") will store a string with the identifier of the current node
-     *  - getStatus().get("members") will store a string with a list comma identifiers of the nodes of the topology
+     *  - getStatus().get("currentNode") returns a string with the identifier of the current node
+     *  - getStatus().get("members") returns a string with a list comma identifiers of the topology nodes
      *    at the moment of the call
-     * In standalone scenarios getStatus() will return an empty map.
+     * In standalone scenarios getStatus() returns an empty map.
      *
      * @return Map with currentNode and members information for distributed scenarios
      */

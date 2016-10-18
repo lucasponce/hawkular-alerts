@@ -41,10 +41,10 @@ public interface StatusService {
     /**
      * Show additional information about distributed status.
      * In distributed scenarios
-     *  - getDistributedStatus().get("currentNode") will store a string with the identifier of the current node
-     *  - getDistributedStatus().get("members") will store a string with a list comma identifiers of the nodes of the topology
+     *  - getDistributedStatus().get("currentNode") returns a string with the identifier of the current node
+     *  - getDistributedStatus().get("members") returns a string with a list comma identifiers of the topology nodes
      *    at the moment of the call
-     * In standalone scenarios getDistributedStatus() will return an empty map.
+     * In standalone scenarios getDistributedStatus() returns an empty map.
      *
      * @return Map with currentNode and members information for distributed scenarios
      */
