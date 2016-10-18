@@ -169,7 +169,7 @@ public class DroolsRulesEngineImpl implements RulesEngine {
 
             pendingData.clear();
 
-            long startFiltering = System.currentTimeMillis();
+            long startBatching = System.currentTimeMillis();
             for (Data data : batchData) {
                 if (null == previousData || !data.getId().equals(previousData.getId())) {
                     kSession.insert(data);
@@ -182,11 +182,11 @@ public class DroolsRulesEngineImpl implements RulesEngine {
                     }
                 }
             }
-            long filteringTime = System.currentTimeMillis() - startFiltering;
-            log.debugf("Batching Data [%s] took [%s]", batchData.size(), filteringTime);
-            if (filteringTime > PERF_BATCHING_THRESHOLD) {
+            long batchingTime = System.currentTimeMillis() - startBatching;
+            log.debugf("Batching Data [%s] took [%s]", batchData.size(), batchingTime);
+            if (batchingTime > PERF_BATCHING_THRESHOLD) {
                 log.warnf("Batching Data [%s] took [%s] ms exceeding [%s] ms",
-                        batchData.size(), filteringTime, PERF_BATCHING_THRESHOLD);
+                        batchData.size(), batchingTime, PERF_BATCHING_THRESHOLD);
             }
 
             if (!pendingData.isEmpty() && log.isDebugEnabled()) {
@@ -201,7 +201,7 @@ public class DroolsRulesEngineImpl implements RulesEngine {
 
             pendingEvents.clear();
 
-            startFiltering = System.currentTimeMillis();
+            startBatching = System.currentTimeMillis();
             for (Event event : batchEvent) {
                 if (null == previousEvent
                         || (null != event.getDataId() && !event.getDataId().equals(previousEvent.getDataId()))) {
@@ -214,11 +214,11 @@ public class DroolsRulesEngineImpl implements RulesEngine {
                     }
                 }
             }
-            filteringTime = System.currentTimeMillis() - startFiltering;
-            log.debugf("Batching Events [%s] took [%s]", batchEvent.size(), filteringTime);
-            if (filteringTime > PERF_BATCHING_THRESHOLD) {
+            batchingTime = System.currentTimeMillis() - startBatching;
+            log.debugf("Batching Events [%s] took [%s]", batchEvent.size(), batchingTime);
+            if (batchingTime > PERF_BATCHING_THRESHOLD) {
                 log.warnf("Batching Events [%s] took [%s] ms exceeding [%s] ms",
-                        batchEvent.size(), filteringTime, PERF_BATCHING_THRESHOLD);
+                        batchEvent.size(), batchingTime, PERF_BATCHING_THRESHOLD);
             }
 
             if (log.isDebugEnabled()) {
