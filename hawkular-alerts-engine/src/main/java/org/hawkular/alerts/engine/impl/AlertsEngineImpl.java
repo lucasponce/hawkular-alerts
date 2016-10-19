@@ -44,6 +44,7 @@ import org.hawkular.alerts.api.model.condition.CompareCondition;
 import org.hawkular.alerts.api.model.condition.Condition;
 import org.hawkular.alerts.api.model.condition.ConditionEval;
 import org.hawkular.alerts.api.model.condition.MissingCondition;
+import org.hawkular.alerts.api.model.condition.MissingConditionEval;
 import org.hawkular.alerts.api.model.dampening.Dampening;
 import org.hawkular.alerts.api.model.data.Data;
 import org.hawkular.alerts.api.model.event.Alert;
@@ -378,7 +379,9 @@ public class AlertsEngineImpl implements AlertsEngine, PartitionTriggerListener,
                         }
                     }
                     if (c instanceof MissingCondition) {
-                        missingStates.add(new MissingState(trigger, (MissingCondition) c));
+                        MissingState missingState = new MissingState(trigger, (MissingCondition) c);
+                        missingStates.add(missingState);
+                        rules.addFact(missingState);
                     }
                 }
 
@@ -455,6 +458,7 @@ public class AlertsEngineImpl implements AlertsEngine, PartitionTriggerListener,
                 MissingState missingState = it.next();
                 if (missingState.getTenantId().equals(trigger.getTenantId()) &&
                         missingState.getTriggerId().equals(triggerId)) {
+                    rules.removeFact(missingState);
                     it.remove();
                 }
             }
@@ -554,7 +558,7 @@ public class AlertsEngineImpl implements AlertsEngine, PartitionTriggerListener,
         public void run() {
             int numTimeouts = checkPendingTimeouts();
 
-            handleMissingStates();
+            checkMissingStates();
 
             if (!pendingData.isEmpty() || !pendingEvents.isEmpty() || numTimeouts > 0 || !missingStates.isEmpty()) {
                 Collection<Data> newData = getAndClearPendingData();
@@ -690,11 +694,18 @@ public class AlertsEngineImpl implements AlertsEngine, PartitionTriggerListener,
         }
     }
 
-    private void handleMissingStates() {
+    private void checkMissingStates() {
         missingStates.stream().forEach(missingState -> {
-            rules.removeFact(missingState);
-            missingState.setTime(System.currentTimeMillis());
-            rules.addFact(missingState);
+            MissingConditionEval eval = new MissingConditionEval(missingState.getCondition(),
+                    missingState.getPreviousTime(),
+                    System.currentTimeMillis());
+            if (eval.isMatch()) {
+                rules.removeFact(missingState);
+                missingState.setPreviousTime(System.currentTimeMillis());
+                missingState.setTime(System.currentTimeMillis());
+                rules.addFact(missingState);
+                rules.addFact(eval);
+            }
         });
     }
 

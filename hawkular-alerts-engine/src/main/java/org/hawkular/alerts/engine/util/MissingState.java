@@ -43,20 +43,20 @@ public class MissingState {
 
     private long time;
 
-    public MissingState(Trigger trigger, MissingCondition condition) {
-        this(trigger.getTenantId(), trigger.getId(), condition.getTriggerMode(), trigger.getSource(),
-                condition.getDataId(), System.currentTimeMillis(), System.currentTimeMillis());
-    }
+    private String conditionId;
 
-    public MissingState(String tenantId, String triggerId, Mode triggerMode, String source, String dataId,
-        long previousTime, long time) {
-        this.tenantId = tenantId;
-        this.triggerId = triggerId;
-        this.triggerMode = triggerMode;
-        this.source = source;
-        this.dataId = dataId;
-        this.previousTime = previousTime;
-        this.time = time;
+    private MissingCondition condition;
+
+    public MissingState(Trigger trigger, MissingCondition condition) {
+        this.tenantId = trigger.getTenantId();
+        this.triggerId = trigger.getId();
+        this.triggerMode = condition.getTriggerMode();
+        this.source = trigger.getSource();
+        this.dataId = condition.getDataId();
+        this.previousTime = System.currentTimeMillis();
+        this.time = System.currentTimeMillis();
+        this.conditionId = condition.getConditionId();
+        this.condition = condition;
     }
 
     public String getTenantId() {
@@ -115,6 +115,25 @@ public class MissingState {
         this.time = time;
     }
 
+    public String getConditionId() {
+        return conditionId;
+    }
+
+    public void setConditionId(String conditionId) {
+        this.conditionId = conditionId;
+    }
+
+    public MissingCondition getCondition() {
+        return condition;
+    }
+
+    public void setCondition(MissingCondition condition) {
+        this.condition = condition;
+    }
+
+    /*
+            Due performance reasons, conditionId will be used for equals()/hashCode() instead of condition
+         */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -128,7 +147,8 @@ public class MissingState {
         if (triggerId != null ? !triggerId.equals(that.triggerId) : that.triggerId != null) return false;
         if (triggerMode != that.triggerMode) return false;
         if (source != null ? !source.equals(that.source) : that.source != null) return false;
-        return dataId != null ? dataId.equals(that.dataId) : that.dataId == null;
+        if (dataId != null ? !dataId.equals(that.dataId) : that.dataId != null) return false;
+        return conditionId != null ? conditionId.equals(that.conditionId) : that.conditionId == null;
 
     }
 
@@ -141,6 +161,7 @@ public class MissingState {
         result = 31 * result + (dataId != null ? dataId.hashCode() : 0);
         result = 31 * result + (int) (previousTime ^ (previousTime >>> 32));
         result = 31 * result + (int) (time ^ (time >>> 32));
+        result = 31 * result + (conditionId != null ? conditionId.hashCode() : 0);
         return result;
     }
 
@@ -154,6 +175,8 @@ public class MissingState {
                 ", dataId='" + dataId + '\'' +
                 ", previousTime=" + previousTime +
                 ", time=" + time +
+                ", conditionId='" + conditionId + '\'' +
+                ", condition=" + condition +
                 '}';
     }
 }

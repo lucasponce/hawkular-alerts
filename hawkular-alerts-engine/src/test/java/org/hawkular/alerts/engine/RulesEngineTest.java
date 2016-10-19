@@ -41,6 +41,7 @@ import org.hawkular.alerts.api.model.condition.EventCondition;
 import org.hawkular.alerts.api.model.condition.ExternalCondition;
 import org.hawkular.alerts.api.model.condition.ExternalConditionEval;
 import org.hawkular.alerts.api.model.condition.MissingCondition;
+import org.hawkular.alerts.api.model.condition.MissingConditionEval;
 import org.hawkular.alerts.api.model.condition.RateCondition;
 import org.hawkular.alerts.api.model.condition.RateConditionEval;
 import org.hawkular.alerts.api.model.condition.StringCondition;
@@ -1894,6 +1895,21 @@ public class RulesEngineTest {
         assertTrue(rulesEngine.getFact(jsonfmt1c2eval) != null);
     }
 
+    public void checkMissingStates(long evalTime) {
+        missingStates.stream().forEach(missingState -> {
+            MissingConditionEval eval = new MissingConditionEval(missingState.getCondition(),
+                    missingState.getPreviousTime(),
+                    evalTime);
+            if (eval.isMatch()) {
+                rulesEngine.removeFact(missingState);
+                missingState.setPreviousTime(evalTime);
+                missingState.setTime(evalTime);
+                rulesEngine.addFact(missingState);
+                rulesEngine.addFact(eval);
+            }
+        });
+    }
+
     @Test
     public void missingDataTestNoData() throws Exception {
         //Initial trigger and condition
@@ -1903,36 +1919,21 @@ public class RulesEngineTest {
         t1.setEnabled(true);
 
         // Missing state is generated on reloadTrigger()
-        missingStates.add(new MissingState(t1, fmt1));
+        MissingState missingState = new MissingState(t1, fmt1);
+        missingStates.add(missingState);
 
         rulesEngine.addFact(t1);
         rulesEngine.addFact(fmt1);
-
-        // Rules Invoker thread updates missing states periodically
-        MissingState missingState = missingStates.iterator().next();
-
-        rulesEngine.removeFact(missingState);
-
-        // It simulates that we have not data in 4 seconds > of 3 seconds interval defined
-        missingState.setTime(missingState.getTime() + 4000);
-
         rulesEngine.addFact(missingState);
+
+        checkMissingStates(System.currentTimeMillis() + 4000);
 
         // If missing states but not data rules engine should fire
         rulesEngine.fireNoData();
 
         assertEquals(1, alerts.size());
 
-
-        // Rules Invoker thread updates missing states periodically
-        missingState = missingStates.iterator().next();
-
-        rulesEngine.removeFact(missingState);
-
-        // It simulates that we have not data in 4 seconds > of 3 seconds interval defined
-        missingState.setTime(missingState.getTime() + 4000);
-
-        rulesEngine.addFact(missingState);
+        checkMissingStates(System.currentTimeMillis() + 8000);
 
         rulesEngine.fireNoData();
 
@@ -1947,26 +1948,28 @@ public class RulesEngineTest {
         t1.setEnabled(true);
 
         // Missing state is generated on reloadTrigger()
-        missingStates.add(new MissingState(t1, fmt1));
+        MissingState missingState = new MissingState(t1, fmt1);
+        missingStates.add(missingState);
 
         rulesEngine.addFact(t1);
         rulesEngine.addFact(fmt1);
-
-        MissingState missingState = missingStates.iterator().next();
-
-        rulesEngine.removeFact(missingState);
-
-        // It simulates that we have not data in 4 seconds > of 3 seconds interval defined
-        missingState.setTime(missingState.getTime() + 4000);
-
         rulesEngine.addFact(missingState);
+
+        // Initial check will send a MissingState into the engine
+        checkMissingStates(System.currentTimeMillis());
+
+        rulesEngine.fireNoData();
 
         // We add a data, so it should update the missingState and not fire any alert
 
-        Data data = Data.forAvailability("tenant", "data-id", missingState.getTime() + 4001, AvailabilityType.DOWN);
+        Data data = Data.forAvailability("tenant", "data-id", System.currentTimeMillis() + 4001, AvailabilityType.DOWN);
         rulesEngine.addData(data);
 
         rulesEngine.fire();
+
+        checkMissingStates(4000);
+
+        rulesEngine.fireNoData();
 
         assertEquals(0, alerts.size());
     }
