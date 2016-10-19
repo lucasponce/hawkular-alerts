@@ -95,7 +95,6 @@ public class RulesEngineTest {
         rulesEngine.addGlobal("pendingTimeouts", pendingTimeouts);
         rulesEngine.addGlobal("autoResolvedTriggers", autoResolvedTriggers);
         rulesEngine.addGlobal("disabledTriggers", disabledTriggers);
-        rulesEngine.addGlobal("missingStates", missingStates);
     }
 
     @After

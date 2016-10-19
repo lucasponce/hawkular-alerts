@@ -269,7 +269,6 @@ public class AlertsEngineImpl implements AlertsEngine, PartitionTriggerListener,
         rules.addGlobal("pendingTimeouts", pendingTimeouts);
         rules.addGlobal("autoResolvedTriggers", autoResolvedTriggers);
         rules.addGlobal("disabledTriggers", disabledTriggers);
-        rules.addGlobal("missingStates", missingStates);
 
         rulesTask = new RulesInvoker();
         wakeUpTimer.schedule(rulesTask, delay, period);
@@ -380,6 +379,7 @@ public class AlertsEngineImpl implements AlertsEngine, PartitionTriggerListener,
                     }
                     if (c instanceof MissingCondition) {
                         MissingState missingState = new MissingState(trigger, (MissingCondition) c);
+                        // MissingStates are modified inside the rules engine
                         missingStates.add(missingState);
                         rules.addFact(missingState);
                     }
@@ -697,10 +697,11 @@ public class AlertsEngineImpl implements AlertsEngine, PartitionTriggerListener,
     private int checkMissingStates() {
         int numMatchingEvals = 0;
         for (MissingState missingState : missingStates) {
-            MissingConditionEval eval = new MissingConditionEval(missingState.getCondition(),
-                    missingState.getPreviousTime(),
-                    System.currentTimeMillis());
-            if (eval.isMatch()) {
+            long now = System.currentTimeMillis();
+            if (missingState.getCondition().match(missingState.getPreviousTime(), now)) {
+                MissingConditionEval eval = new MissingConditionEval(missingState.getCondition(),
+                        missingState.getPreviousTime(),
+                        now);
                 rules.removeFact(missingState);
                 missingState.setPreviousTime(System.currentTimeMillis());
                 missingState.setTime(System.currentTimeMillis());
