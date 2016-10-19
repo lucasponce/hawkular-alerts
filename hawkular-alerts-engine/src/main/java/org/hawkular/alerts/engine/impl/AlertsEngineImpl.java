@@ -558,9 +558,9 @@ public class AlertsEngineImpl implements AlertsEngine, PartitionTriggerListener,
         public void run() {
             int numTimeouts = checkPendingTimeouts();
 
-            checkMissingStates();
+            int numMissingEvals = checkMissingStates();
 
-            if (!pendingData.isEmpty() || !pendingEvents.isEmpty() || numTimeouts > 0 || !missingStates.isEmpty()) {
+            if (!pendingData.isEmpty() || !pendingEvents.isEmpty() || numTimeouts > 0 || numMissingEvals > 0) {
                 Collection<Data> newData = getAndClearPendingData();
                 Collection<Event> newEvents = getAndClearPendingEvents();
 
@@ -694,8 +694,9 @@ public class AlertsEngineImpl implements AlertsEngine, PartitionTriggerListener,
         }
     }
 
-    private void checkMissingStates() {
-        missingStates.stream().forEach(missingState -> {
+    private int checkMissingStates() {
+        int numMatchingEvals = 0;
+        for (MissingState missingState : missingStates) {
             MissingConditionEval eval = new MissingConditionEval(missingState.getCondition(),
                     missingState.getPreviousTime(),
                     System.currentTimeMillis());
@@ -704,9 +705,11 @@ public class AlertsEngineImpl implements AlertsEngine, PartitionTriggerListener,
                 missingState.setPreviousTime(System.currentTimeMillis());
                 missingState.setTime(System.currentTimeMillis());
                 rules.addFact(missingState);
+                rules.addFact(eval);
+                numMatchingEvals++;
             }
-            rules.addFact(eval);
-        });
+        }
+        return numMatchingEvals;
     }
 
     /*

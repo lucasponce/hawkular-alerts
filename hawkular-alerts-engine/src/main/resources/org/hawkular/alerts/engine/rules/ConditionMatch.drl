@@ -276,6 +276,12 @@ rule UpdateMissingStateFromData
             setPreviousTime($d.getTimestamp()),
             setTime($d.getTimestamp())
         }
+        // We now is a non matching eval but needed for Dampening
+        MissingConditionEval mce = new MissingConditionEval( $md.getCondition(), $md.getPreviousTime(), $md.getTime());
+        if (log != null && log.isDebugEnabled()) {
+            log.debugf("MissingConditionEval : %s %s", (mce.isMatch() ? "Match!" : "no match"), mce.getLog());
+        }
+        insert( mce );
 end
 
 rule UpdateMissingStateFromEvent
@@ -290,6 +296,12 @@ rule UpdateMissingStateFromEvent
             setPreviousTime($e.getCtime()),
             setTime($e.getCtime())
         };
+        // We now is a non matching eval but needed for Dampening
+        MissingConditionEval mce = new MissingConditionEval( $md.getCondition(), $md.getPreviousTime(), $md.getTime());
+        if (log != null && log.isDebugEnabled()) {
+            log.debugf("MissingConditionEval : %s %s", (mce.isMatch() ? "Match!" : "no match"), mce.getLog());
+        }
+        insert( mce );
 end
 
 // Data retraction rules
