@@ -704,8 +704,8 @@ public class AlertsEngineImpl implements AlertsEngine, PartitionTriggerListener,
                 missingState.setPreviousTime(System.currentTimeMillis());
                 missingState.setTime(System.currentTimeMillis());
                 rules.addFact(missingState);
-                rules.addFact(eval);
             }
+            rules.addFact(eval);
         });
     }
 
