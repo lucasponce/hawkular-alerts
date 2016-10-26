@@ -169,7 +169,7 @@ public class Trigger implements Serializable {
     private boolean autoResolveAlerts;
 
     @ApiModelProperty(value = "The policy used for deciding whether the trigger auto-resolved condition-set is " +
-            "satisfied. Either ALL conditions must evaluate to true, or whether ANY one is enough.",
+            "satisfied. ALL conditions must evaluate to true or ANY one condition must evaluate to true.",
             position = 16,
             example = "ALL")
     @JsonInclude
@@ -196,13 +196,13 @@ public class Trigger implements Serializable {
     private boolean enabled;
 
     @ApiModelProperty(value = "The policy used for deciding whether the trigger condition-set is satisfied. " +
-            "Either ALL conditions must evaluate to true, or whether ANY one is enough.",
+            "ALL conditions must evaluate to true or ANY one condition must evaluate to true.",
             position = 20,
             example = "ALL")
     @JsonInclude
     private Match firingMatch;
 
-    @ApiModelProperty(value = "Extended mechanism to match trigger's condition against Data with [source, dataId] " +
+    @ApiModelProperty(value = "Extended mechanism to match trigger conditions against Data with [source, dataId] " +
             "identifiers. In this way it is possible to qualify triggers and data with a source such that a trigger " +
             "only evaluates data having the same source.",
             position = 21)

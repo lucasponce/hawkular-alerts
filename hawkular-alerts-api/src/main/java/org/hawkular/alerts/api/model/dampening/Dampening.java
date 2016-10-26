@@ -46,7 +46,7 @@ import io.swagger.annotations.ApiModelProperty;
         " + \n" +
         "It’s often the case that you don’t want a trigger to fire every time a condition set is met. + \n" +
         "Instead, you want to ensure that the issue is not a spike of activity. + \n" +
-        "Hawkular Alerting provides several way of ensuring triggers fire only as desire. + \n" +
+        "Hawkular Alerting provides several ways of ensuring triggers fire only as desired. + \n" +
         " + \n" +
         "This is a Trigger Dampening in Hawkular Alerting terminology. + \n" +
         " + \n" +

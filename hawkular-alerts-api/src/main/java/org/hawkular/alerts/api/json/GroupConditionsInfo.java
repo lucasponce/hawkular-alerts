@@ -53,7 +53,7 @@ import io.swagger.annotations.ApiModelProperty;
         "used for the current member triggers. + \n" +
         "Because most condition types have only one dataId the map will typically have 1 entry per condition. + \n" +
         "But because a condition could have multiple dataIds (e.g CompareCondition has dataId and data2Id), + \n" +
-        "it may have more entries that conditions. + \n" +
+        "it may have more entries than conditions. + \n" +
         "The inner map maps member triggerIds to the dataId to be used for that member trigger " +
         "for the given token. + \n" +
         "It should have 1 entry for each member trigger. + \n" +

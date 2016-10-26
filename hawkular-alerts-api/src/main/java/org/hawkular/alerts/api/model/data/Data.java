@@ -51,14 +51,14 @@ public class Data implements Comparable<Data>, Serializable {
     @JsonInclude
     protected String tenantId;
 
-    @ApiModelProperty(value = "Extended mechanism to match trigger's condition against Data with [source, dataId] " +
+    @ApiModelProperty(value = "Extended mechanism to match trigger conditions against Data with [source, dataId] " +
             "identifiers. In this way it is possible to qualify triggers and data with a source such that a trigger " +
             "only evaluates data having the same source.",
             position = 1)
     @JsonInclude
     protected String source;
 
-    @ApiModelProperty(value = "Data id unique whithin the tenant.",
+    @ApiModelProperty(value = "Data id unique within the tenant.",
             position = 2,
             required = true)
     @JsonInclude

@@ -102,9 +102,11 @@ public class Event implements Comparable<Event>, Serializable {
     String dataSource;
 
     // Optional dataId of Event, used by EventCondition to evaluate events
-    @ApiModelProperty(value = "Data identifier used for Events condition evaluation. All Events participating on " +
-            "conditions must have a valid dataId. DataId in events context can be read as an events source name. + \n" +
-            "Events generated from <<Trigger>> will use the triggerId as dataId.",
+    @ApiModelProperty(value = "Data identifier used for Events condition evaluation. Events must supply a valid dataId " +
+            "to be considered for <<EventCondition>> evaluation. + \n" +
+            "DataIds in an events context should incorporate the source of the event (for uniqueness). + \n" +
+            "Events generated from a <<Trigger>> will have dataId set to the triggerId, therefore allowing chaining " +
+            "with other <<EventCondition>>. ",
             position = 5,
             required = true)
     @JsonInclude(Include.NON_EMPTY)

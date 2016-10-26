@@ -57,14 +57,14 @@ public class CompareCondition extends Condition {
     @JsonInclude(Include.NON_NULL)
     private Operator operator;
 
-    @ApiModelProperty(value = "Data identifier of the metric used for comparation.",
+    @ApiModelProperty(value = "Data identifier of the metric used for comparison.",
             position = 1,
             required = true)
     @JsonInclude(Include.NON_NULL)
     private String data2Id;
 
-    @ApiModelProperty(value = "Straight multiplier to be applied to data2Id on the comparition. " +
-            "Final comparation expression can be read as \"dataId <operator> data2Multiplier*data2Id\".",
+    @ApiModelProperty(value = "Straight multiplier to be applied to data2Id on the comparison. " +
+            "Final comparison expression can be read as \"dataId <operator> data2Multiplier*data2Id\".",
             position = 2,
             required = true)
     @JsonInclude(Include.NON_NULL)

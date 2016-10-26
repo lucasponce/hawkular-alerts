@@ -420,7 +420,7 @@ public class AlertsHandler {
             @QueryParam("endTime")
             final Long endTime,
             @ApiParam(required = false, value = "Filter out alerts for unspecified alertIds.",
-                allowableValues = "Comma separated list of trigger IDs.")
+                allowableValues = "Comma separated list of alert IDs.")
             @QueryParam("alertIds")
             final String alertIds,
             @ApiParam(required = false, value = "Filter out alerts for unspecified triggers.",

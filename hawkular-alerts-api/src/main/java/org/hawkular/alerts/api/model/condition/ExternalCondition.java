@@ -35,13 +35,13 @@ import io.swagger.annotations.ApiModelProperty;
  * @author Lucas Ponce
  */
 @ApiModel(description = "An ExternalCondition is used for condition evaluations performed outside of the " +
-        "Alerts engine. + \n" +
+        "Alerting engine. + \n" +
         " + \n" +
         "The external engine will send StringData providing the data for which the external evaluation " +
         " + \n" +
         "has already evaluated to true. + \n" +
         " + \n" +
-        "The Alerts engine assumes a true evaluation for the data being sent in from the external engine. " +
+        "The Alerting engine assumes a true evaluation for the data being sent in from the external engine. " +
         "In other words, every <<ExternalConditionEval>> will have a true evaluation and therefore, for triggers with " +
         "only a single external condition, and with default dampening, an alert will be fired for each " +
         "data submission.")

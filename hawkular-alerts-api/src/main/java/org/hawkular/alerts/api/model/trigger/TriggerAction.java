@@ -48,7 +48,7 @@ import io.swagger.annotations.ApiModelProperty;
         "It can add optional constraints that determine when an action will be executed: + \n" +
         " + \n" +
         "- A set of Alert.Status (represented by its string value). + \n" +
-        "The action will be executed if the Alert which is linked is on one of the states defined. + \n" +
+        "The action will be executed if the linked Alert is set to one of the defined states. + \n" +
         "Unlike Alerts, Events don't have lifecycle, TriggerActions on Events are all executed at " +
         "Event creation time. + \n" +
         " + \n" +

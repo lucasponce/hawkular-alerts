@@ -40,7 +40,7 @@ import io.swagger.annotations.ApiModelProperty;
  * @author Jay Shaughnessy
  * @author Lucas Ponce
  */
-@ApiModel(description = "An action is the abstract concept of ta consequence of an event. + \n" +
+@ApiModel(description = "An action represents a consequence of an event. + \n" +
         " + \n" +
         "Actions are processed by plugins, and plugins offer a map of properties to personalize an action. + \n" +
         "An ActionDefinition stores which properties will be used for a specific action in a specific plugin. + \n" +
