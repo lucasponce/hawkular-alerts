@@ -16,6 +16,7 @@
  */
 package org.hawkular.alerts.engine.impl;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.TreeSet;
 import java.util.function.Predicate;
@@ -24,17 +25,24 @@ import javax.ejb.Singleton;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 
+import org.drools.compiler.compiler.DroolsParserException;
 import org.drools.core.event.DebugAgendaEventListener;
 import org.drools.core.event.DebugRuleRuntimeEventListener;
 import org.hawkular.alerts.api.model.data.Data;
 import org.hawkular.alerts.api.model.event.Event;
 import org.hawkular.alerts.engine.service.RulesEngine;
 import org.jboss.logging.Logger;
+import org.kie.api.KieBase;
+import org.kie.api.KieBaseConfiguration;
 import org.kie.api.KieServices;
+import org.kie.api.conf.EventProcessingOption;
 import org.kie.api.runtime.KieContainer;
 import org.kie.api.runtime.KieSession;
 import org.kie.api.runtime.ObjectFilter;
 import org.kie.api.runtime.rule.FactHandle;
+import org.kie.internal.KnowledgeBaseFactory;
+import org.kie.internal.conf.MultithreadEvaluationOption;
+import org.kie.internal.utils.KieHelper;
 
 /**
  * An implementation of RulesEngine based on drools framework.
@@ -62,14 +70,33 @@ public class DroolsRulesEngineImpl implements RulesEngine {
 
     public DroolsRulesEngineImpl() {
         log.debug("Creating instance.");
-        ks = KieServices.Factory.get();
-        kc = ks.getKieClasspathContainer();
-        kSession = kc.newKieSession(SESSION_NAME);
-
+        buildKsession();
         if (log.isEnabled(Logger.Level.TRACE)) {
             kSession.addEventListener(new DebugAgendaEventListener());
             kSession.addEventListener(new DebugRuleRuntimeEventListener());
         }
+    }
+
+    private void buildKsession() {
+        try {
+            buildKieSession("org/hawkular/alerts/engine/rules/ConditionMatch.drl");
+        } catch (Exception e) {
+            log.fatal("Rules cannot be found", e);
+        }
+    }
+
+    private void buildKieSession( String uri )
+            throws DroolsParserException, IOException, Exception {
+
+        final KieBaseConfiguration kieBaseConfiguration = KnowledgeBaseFactory.newKnowledgeBaseConfiguration();
+        // kieBaseConfiguration.setOption(MultithreadEvaluationOption.YES);
+        // kieBaseConfiguration.setOption(EventProcessingOption.STREAM);
+
+        final KieBase kieBase = new KieHelper().setClassLoader(getClass().getClassLoader())
+                .addFromClassPath(uri)
+                .build(kieBaseConfiguration);
+
+        kSession = kieBase.newKieSession();
     }
 
     @Override
@@ -343,6 +370,6 @@ public class DroolsRulesEngineImpl implements RulesEngine {
     public void reset() {
         log.debug("Reset session");
         kSession.dispose();
-        kSession = kc.newKieSession(SESSION_NAME);
+        buildKsession();
     }
 }
