@@ -97,6 +97,9 @@ public class DroolsRulesEngineImpl implements RulesEngine {
                 .build(kieBaseConfiguration);
 
         kSession = kieBase.newKieSession();
+        // Repeated just to focus on the agenda, not on all hawkular scenario
+        kSession.addEventListener(new DebugAgendaEventListener());
+        kSession.addEventListener(new DebugRuleRuntimeEventListener());
     }
 
     @Override

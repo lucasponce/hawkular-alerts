@@ -21,6 +21,10 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.Vector;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.hawkular.alerts.api.model.condition.AvailabilityCondition;
 import org.hawkular.alerts.api.model.condition.CompareCondition;
@@ -56,9 +60,9 @@ public class PerfRulesEngineTest {
     private static final Logger log = Logger.getLogger(PerfRulesEngineTest.class);
 
     RulesEngine rulesEngine = new DroolsRulesEngineImpl();
-    List<Alert> alerts = new ArrayList<>();
+    List<Alert> alerts = new PerfArrayList<>();
     Set<Dampening> pendingTimeouts = new HashSet<>();
-    Set<Data> datums = new HashSet<Data>();
+    Set<Data> datums = new HashSet<>();
 
     @Before
     public void before() {
@@ -112,9 +116,9 @@ public class PerfRulesEngineTest {
         long stop = System.currentTimeMillis();
 
         if (nQueue > 0) {
-            assert alerts.size() == nData * nQueue : alerts;
+            assert alerts.size() == nData * nQueue : alerts.size();
         } else {
-            assert alerts.size() == nData : alerts;
+            assert alerts.size() == nData : alerts.size();
         }
 
         report(test, nDefinitions, nData, start, stop);
@@ -656,4 +660,14 @@ public class PerfRulesEngineTest {
         }
     }
 
+    public class PerfArrayList<T> extends ArrayList<T> {
+        private AtomicLong counter = new AtomicLong(0);
+
+        @Override
+        public boolean add(T t) {
+            counter.getAndIncrement();
+            log.info("Counter: " + counter);
+            return super.add(t);
+        }
+    }
 }
