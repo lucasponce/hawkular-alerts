@@ -78,7 +78,9 @@ public class DroolsRulesEngineImpl implements RulesEngine {
         }
 
         minReportingInterval = new Integer(
-                AlertProperties.getProperty(MIN_REPORTING_INTERVAL, MIN_REPORTING_INTERVAL_DEFAULT));
+                AlertProperties.getProperty(MIN_REPORTING_INTERVAL,
+                        MIN_REPORTING_INTERVAL_ENV,
+                        MIN_REPORTING_INTERVAL_DEFAULT));
     }
 
     @Override

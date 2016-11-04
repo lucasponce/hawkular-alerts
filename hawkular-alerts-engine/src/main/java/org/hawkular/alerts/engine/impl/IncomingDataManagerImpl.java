@@ -78,6 +78,7 @@ public class IncomingDataManagerImpl implements IncomingDataManager {
         try {
             minReportingInterval = new Integer(
                     AlertProperties.getProperty(RulesEngine.MIN_REPORTING_INTERVAL,
+                            RulesEngine.MIN_REPORTING_INTERVAL_ENV,
                             RulesEngine.MIN_REPORTING_INTERVAL_DEFAULT));
         } catch (Throwable t) {
             if (log.isDebugEnabled()) {
