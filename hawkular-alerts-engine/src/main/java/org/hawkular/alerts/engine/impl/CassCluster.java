@@ -38,6 +38,7 @@ import javax.ejb.Startup;
 import javax.enterprise.inject.Produces;
 import javax.net.ssl.SSLContext;
 
+
 import org.cassalog.core.Cassalog;
 import org.cassalog.core.CassalogBuilder;
 import org.hawkular.alerts.engine.util.TokenReplacingReader;
@@ -48,6 +49,7 @@ import org.jboss.logging.Logger;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.JdkSSLOptions;
 import com.datastax.driver.core.KeyspaceMetadata;
+import com.datastax.driver.core.PoolingOptions;
 import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.QueryOptions;
 import com.datastax.driver.core.ResultSet;
@@ -118,6 +120,9 @@ public class CassCluster {
     private static final String ALERTS_CASSANDRA_USESSL = "hawkular-alerts.cassandra-use-ssl";
     private static final String ALERTS_CASSANDRA_USESSL_ENV = "CASSANDRA_USESSL";
 
+    private static final String ALERTS_CASSANDRA_MAX_QUEUE = "hawkular-alerts.cassandra-max-queue";
+    private static final String ALERTS_CASSANDRA_MAX_QUEUE_ENV = "CASSANDRA_MAX_QUEUE";
+
     private int attempts;
     private int timeout;
     private String cqlPort;
@@ -127,6 +132,7 @@ public class CassCluster {
     private boolean overwrite = false;
     private String keyspace;
     private boolean cassandraUseSSL;
+    private int maxQueue;
 
     private Cluster cluster = null;
 
@@ -164,6 +170,8 @@ public class CassCluster {
         keyspace = AlertProperties.getProperty(ALERTS_CASSANDRA_KEYSPACE, "hawkular_alerts");
         cassandraUseSSL = Boolean.parseBoolean(AlertProperties.getProperty(ALERTS_CASSANDRA_USESSL,
                 ALERTS_CASSANDRA_USESSL_ENV, "false"));
+        maxQueue = Integer.parseInt(AlertProperties.getProperty(ALERTS_CASSANDRA_MAX_QUEUE,
+                ALERTS_CASSANDRA_MAX_QUEUE_ENV, "9182"));
     }
 
     @PostConstruct
@@ -191,6 +199,7 @@ public class CassCluster {
         Cluster.Builder clusterBuilder = new Cluster.Builder()
                 .addContactPoints(nodes.split(","))
                 .withPort(new Integer(cqlPort))
+                .withPoolingOptions(new PoolingOptions().setMaxQueueSize(maxQueue))
                 .withProtocolVersion(ProtocolVersion.V3)
                 .withQueryOptions(new QueryOptions().setRefreshSchemaIntervalMillis(0));
 
