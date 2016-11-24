@@ -69,6 +69,9 @@ public class EmailPlugin implements ActionPluginListener {
     public static final String MESSAGE_ID = "Message-ID";
     public static final String IN_REPLY_TO = "in-reply-to";
 
+    public static final String DEFAULT_MAIL_SMTP_HOST = "localhost";
+    public static final String DEFAULT_MAIL_SMTP_PORT = "25";
+
     public static final String DEFAULT_FROM_PROPERTY = "org.hawkular.alerts.actions.email.default.from";
     public static final String DEFAULT_FROM = System.getProperty(DEFAULT_FROM_PROPERTY, "noreply@hawkular.org");
 
@@ -88,6 +91,16 @@ public class EmailPlugin implements ActionPluginListener {
         If not properties found per action, then plugin looks into default properties set at plugin level.
         If not default properties found at plugin level, then it takes to default ones defined inside plugin.
      */
+
+    /**
+     * "mail" property is used as main prefix for javax.mail.Session properties.
+     * So, all "mail.<protocol>.<value>" properties are passed to mail Session.
+     *
+     * Properties can be defined per action based.
+     * If not properties defined at action level, it takes default plugin properties.
+     * If not properties defined at plugin level it will search at System.getProperties() level.
+     */
+    public static final String PROP_MAIL = "mail";
 
     /**
      * "from" property defines the sender of the plugin email.
@@ -188,6 +201,7 @@ public class EmailPlugin implements ActionPluginListener {
 
     public EmailPlugin() {
 
+        defaultProperties.put(PROP_MAIL, "");
         defaultProperties.put(PROP_FROM, DEFAULT_FROM);
         defaultProperties.put(PROP_FROM_NAME, DEFAULT_FROM_NAME);
         defaultProperties.put(PROP_TO, "");
@@ -203,25 +217,23 @@ public class EmailPlugin implements ActionPluginListener {
         this.sender = sender;
     }
 
-    private void initMailSession(String tenantId) {
+    private void initMailSession(ActionMessage msg) {
         boolean offLine = System.getProperty(MAIL_SESSION_OFFLINE) != null;
         if (!offLine) {
-            Properties systemProperties = System.getProperties();
             Properties emailProperties = new Properties();
+            msg.getAction().getProperties().entrySet().stream()
+                    .filter(e -> e.getKey().startsWith("mail."))
+                    .forEach(e -> {
+                        emailProperties.put(e.getKey(), e.getValue());
+                    });
+            Properties systemProperties = System.getProperties();
             for (String property : systemProperties.stringPropertyNames()) {
-                if (!isEmpty(tenantId) && property.startsWith(tenantId + ".mail.")) {
-                    emailProperties.put(property.substring(tenantId.length() + 1), System.getProperty(property));
-                } else if (property.startsWith("mail.")) {
-                    emailProperties.put(property, System.getProperty(property));
+                if (property.startsWith("mail.")) {
+                    emailProperties.putIfAbsent(property, System.getProperty(property));
                 }
             }
-            if (emailProperties.isEmpty()) {
-                if (log.isDebugEnabled()) {
-                    log.debug("No mail.* properties found, setting default mail server to localhost:25");
-                }
-                emailProperties.setProperty("mail.smtp.host", "localhost");
-                emailProperties.setProperty("mail.smtp.port", "25");
-            }
+            emailProperties.putIfAbsent("mail.smtp.host", DEFAULT_MAIL_SMTP_HOST);
+            emailProperties.putIfAbsent("mail.smtp.port", DEFAULT_MAIL_SMTP_PORT);
             mailSession = Session.getInstance(emailProperties);
         }
     }
@@ -262,7 +274,7 @@ public class EmailPlugin implements ActionPluginListener {
             /**
              * Mail session can change during invocations
              */
-            initMailSession(tenantId);
+            initMailSession(msg);
             Message message = createMimeMessage(msg);
             Transport.send(message);
             msgLog.infoActionReceived("email", msg.toString());
