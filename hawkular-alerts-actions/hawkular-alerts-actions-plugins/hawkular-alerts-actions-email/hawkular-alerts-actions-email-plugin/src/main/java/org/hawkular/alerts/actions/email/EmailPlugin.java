@@ -23,8 +23,10 @@ import java.util.Properties;
 import java.util.Set;
 
 import javax.mail.Address;
+import javax.mail.Authenticator;
 import javax.mail.Message;
 import javax.mail.Multipart;
+import javax.mail.PasswordAuthentication;
 import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
@@ -94,11 +96,14 @@ public class EmailPlugin implements ActionPluginListener {
 
     /**
      * "mail" property is used as main prefix for javax.mail.Session properties.
-     * So, all "mail.<protocol>.<value>" properties are passed to mail Session.
+     *
+     * All "mail.<protocol>.<value>" properties are passed to mail Session.
      *
      * Properties can be defined per action based.
      * If not properties defined at action level, it takes default plugin properties.
-     * If not properties defined at plugin level it will search at System.getProperties() level.
+     *
+     * For these special "mail" properties, if not properties defined at action plugin, it will search at
+     * System.getProperties() level.
      */
     public static final String PROP_MAIL = "mail";
 
@@ -234,7 +239,19 @@ public class EmailPlugin implements ActionPluginListener {
             }
             emailProperties.putIfAbsent("mail.smtp.host", DEFAULT_MAIL_SMTP_HOST);
             emailProperties.putIfAbsent("mail.smtp.port", DEFAULT_MAIL_SMTP_PORT);
-            mailSession = Session.getInstance(emailProperties);
+            if (emailProperties.containsKey("mail.smtp.user")
+                    && emailProperties.containsKey("mail.smtp.pass")) {
+                String user = emailProperties.getProperty("mail.smtp.user");
+                String password = emailProperties.getProperty("mail.smtp.pass");
+                mailSession = Session.getInstance(emailProperties, new Authenticator() {
+                    @Override
+                    protected PasswordAuthentication getPasswordAuthentication() {
+                        return new PasswordAuthentication(user, password);
+                    }
+                });
+            } else {
+                mailSession = Session.getInstance(emailProperties);
+            }
         }
     }
 
