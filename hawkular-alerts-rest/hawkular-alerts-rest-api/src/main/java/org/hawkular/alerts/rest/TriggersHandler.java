@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Red Hat, Inc. and/or its affiliates
+ * Copyright 2015-2017 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@ package org.hawkular.alerts.rest;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
+import static org.hawkular.alerts.rest.CommonUtil.isEmpty;
 import static org.hawkular.alerts.rest.HawkularAlertsApp.TENANT_HEADER_NAME;
 
 import java.util.ArrayList;
@@ -1149,18 +1150,6 @@ public class TriggersHandler {
             }
             return ResponseUtil.internalError(e);
         }
-    }
-
-    private boolean isEmpty(String s) {
-        return null == s || s.trim().isEmpty();
-    }
-
-    private boolean isEmpty(Collection collection) {
-        return collection == null || collection.isEmpty();
-    }
-
-    private boolean isEmpty(Map map) {
-        return map == null || map.isEmpty();
     }
 
     private boolean checkTags(Trigger trigger) {
