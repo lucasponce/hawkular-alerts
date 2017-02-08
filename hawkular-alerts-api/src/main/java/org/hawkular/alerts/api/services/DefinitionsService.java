@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Red Hat, Inc. and/or its affiliates
+ * Copyright 2015-2017 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -654,7 +654,28 @@ public interface DefinitionsService {
 
     ActionDefinition getActionDefinition(String tenantId, String actionPlugin, String actionId) throws Exception;
 
+    /**
+     * Register a local DefinitionsListener.
+     * A local listener is only invoked in the node that performs the definitions operation.
+     *
+     * @param listener the Listener to add
+     * @param eventType specify a type to filter when the listener will be invoked
+     * @param eventTypes optional types to filter when the listener will be invoked
+     */
     void registerListener(DefinitionsListener listener, Type eventType, Type... eventTypes);
+
+    /**
+     * Register a local or distributed Definitions listener.
+     * A local listener is only invoked in the node that performs the definitions operation.
+     * A distributed listener is invoked in all the nodes of the cluster.
+     *
+     * @param listener the listener to add
+     * @param distributed true indicates listener is distributed
+     *                    false indicates listener is local
+     * @param eventType specify a type to filter when the listener will be invoked
+     * @param eventTypes optional types to filter when the listener will be invoked
+     */
+    void registerListener(DefinitionsListener listener, boolean distributed, Type eventType, Type... eventTypes);
 
     /**
      * Export alert definitions per a specific Tenant.

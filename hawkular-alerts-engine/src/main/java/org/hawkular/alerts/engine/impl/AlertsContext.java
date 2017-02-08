@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Red Hat, Inc. and/or its affiliates
+ * Copyright 2015-2017 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,17 +18,23 @@ package org.hawkular.alerts.engine.impl;
 
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 
+import javax.annotation.PostConstruct;
+import javax.ejb.EJB;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 
 import org.hawkular.alerts.api.services.ActionListener;
+import org.hawkular.alerts.api.services.DefinitionsEvent;
 import org.hawkular.alerts.api.services.DefinitionsEvent.Type;
 import org.hawkular.alerts.api.services.DefinitionsListener;
+import org.hawkular.alerts.engine.service.PartitionManager;
 import org.jboss.logging.Logger;
 
 /**
@@ -44,15 +50,46 @@ public class AlertsContext {
     private final Logger log = Logger.getLogger(AlertsContext.class);
 
     private Map<DefinitionsListener, Set<Type>> definitionListeners = new HashMap<>();
+    private Map<DefinitionsListener, Set<Type>> distributedListeners = new HashMap<>();
 
     List<ActionListener> actionsListeners = new CopyOnWriteArrayList<>();
 
-    public void registerDefinitionListener(DefinitionsListener listener, Type eventType, Type... eventTypes) {
+    private boolean distributed = false;
+    @EJB
+    PartitionManager partitionManager;
+
+    @PostConstruct
+    void init() {
+        if (partitionManager != null) {
+            distributed = partitionManager.isDistributed();
+        }
+        if (distributed) {
+            partitionManager.registerDefinitionsEventsListener((definitionsEvents) -> {
+                Set<DefinitionsEvent.Type> notificationTypes = definitionsEvents.stream()
+                        .map(n -> n.getType())
+                        .collect(Collectors.toSet());
+                distributedListeners.entrySet().stream()
+                        .filter(e -> shouldNotify(e.getValue(), notificationTypes))
+                        .forEach(e -> {
+                            log.debugf("Notified Distributed Listener %s of %s", e.getKey(), notificationTypes);
+                            e.getKey().onChange(definitionsEvents.stream()
+                                    .filter(de -> e.getValue().contains(de.getType()))
+                                    .collect(Collectors.toSet()));
+                        });
+            });
+        }
+    }
+
+    public void registerDefinitionListener(DefinitionsListener listener, boolean distributed, Type eventType,
+                                           Type... eventTypes) {
         EnumSet<Type> types = EnumSet.of(eventType, eventTypes);
         if (log.isDebugEnabled()) {
             log.debug("Registering listeners " + listener + " for event types " + types);
         }
-        definitionListeners.put(listener, types);
+        if (distributed) {
+            distributedListeners.put(listener, types);
+        }
+       definitionListeners.put(listener, types);
     }
 
     public Map<DefinitionsListener, Set<Type>> getDefinitionListeners() {
@@ -68,5 +105,32 @@ public class AlertsContext {
 
     public List<ActionListener> getActionsListeners() {
         return actionsListeners;
+    }
+
+    public void notifyListeners(Set<DefinitionsEvent> notifications) {
+        Set<DefinitionsEvent.Type> notificationTypes = notifications.stream()
+                .map(n -> n.getType())
+                .collect(Collectors.toSet());
+        if (log.isDebugEnabled()) {
+            log.debugf("Notifying applicable listeners %s of events %s",
+                    definitionListeners, notifications);
+        }
+        definitionListeners.entrySet().stream()
+                .filter(e -> shouldNotify(e.getValue(), notificationTypes))
+                .forEach(e -> {
+                    log.debugf("Notified Listener %s of %s", e.getKey(), notificationTypes);
+                    e.getKey().onChange(notifications.stream()
+                            .filter(de -> e.getValue().contains(de.getType()))
+                            .collect(Collectors.toSet()));
+                });
+        if (distributed) {
+            partitionManager.notifyDefinitionsEvents(notifications);
+        }
+    }
+
+    private boolean shouldNotify(Set<DefinitionsEvent.Type> listenerTypes, Set<DefinitionsEvent.Type> eventTypes) {
+        HashSet<Type> intersection = new HashSet<>(listenerTypes);
+        intersection.retainAll(eventTypes);
+        return !intersection.isEmpty();
     }
 }

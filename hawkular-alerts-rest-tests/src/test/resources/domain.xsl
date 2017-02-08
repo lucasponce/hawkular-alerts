@@ -59,6 +59,9 @@
       <replicated-cache name="globalActions" mode="ASYNC">
         <transaction mode="BATCH"/>
       </replicated-cache>
+      <replicated-cache name="definitionsEvents" mode="ASYNC">
+        <transaction mode="BATCH"/>
+      </replicated-cache>
     </cache-container>
   </xsl:template>
 

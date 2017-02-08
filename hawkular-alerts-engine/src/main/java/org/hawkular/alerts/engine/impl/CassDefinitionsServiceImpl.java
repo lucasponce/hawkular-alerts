@@ -3031,7 +3031,12 @@ public class CassDefinitionsServiceImpl implements DefinitionsService {
 
     @Override
     public void registerListener(DefinitionsListener listener, Type eventType, Type... eventTypes) {
-        alertsContext.registerDefinitionListener(listener, eventType, eventTypes);
+        registerListener(listener, false, eventType, eventTypes);
+    }
+
+    @Override
+    public void registerListener(DefinitionsListener listener, boolean distributed, Type eventType, Type... eventTypes) {
+        alertsContext.registerDefinitionListener(listener, distributed, eventType, eventTypes);
     }
 
     private void notifyListeners(final DefinitionsEvent de) {
@@ -3039,15 +3044,7 @@ public class CassDefinitionsServiceImpl implements DefinitionsService {
             deferredNotifications.add(de);
             return;
         }
-        if (log.isDebugEnabled()) {
-            log.debugf("Notifying applicable listeners %s of event %s", alertsContext.getDefinitionListeners(), de);
-        }
-        alertsContext.getDefinitionListeners().entrySet().stream()
-                .filter(e -> e.getValue().contains(de.getType()))
-                .forEach(e -> {
-                    log.debugf("Notified Listener %s of %s", e.getKey(), de.getType().name());
-                    e.getKey().onChange(Collections.singleton(de));
-                });
+        alertsContext.notifyListeners(Collections.singleton(de));
     }
 
     private void notifyListenersDeferred() {
@@ -3057,29 +3054,7 @@ public class CassDefinitionsServiceImpl implements DefinitionsService {
 
         Set<DefinitionsEvent> notifications = deferredNotifications;
         deferredNotifications = new HashSet<>();
-
-        Set<DefinitionsEvent.Type> notificationTypes = notifications.stream()
-                .map(n -> n.getType())
-                .collect(Collectors.toSet());
-
-        if (log.isDebugEnabled()) {
-            log.debugf("Notifying applicable listeners %s of deferred events %s",
-                    alertsContext.getDefinitionListeners(), notifications);
-        }
-        alertsContext.getDefinitionListeners().entrySet().stream()
-                .filter(e -> shouldNotify(e.getValue(), notificationTypes))
-                .forEach(e -> {
-                    log.debugf("Notified Listener %s of %s", e.getKey(), notificationTypes);
-                    e.getKey().onChange(notifications.stream()
-                                                     .filter(de -> e.getValue().contains(de.getType()))
-                                                     .collect(Collectors.toSet()));
-                });
-    }
-
-    private boolean shouldNotify(Set<DefinitionsEvent.Type> listenerTypes, Set<DefinitionsEvent.Type> eventTypes) {
-        HashSet<DefinitionsEvent.Type> intersection = new HashSet<>(listenerTypes);
-        intersection.retainAll(eventTypes);
-        return !intersection.isEmpty();
+        alertsContext.notifyListeners(notifications);
     }
 
     @Override

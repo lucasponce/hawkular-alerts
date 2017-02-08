@@ -16,6 +16,7 @@
  */
 package org.hawkular.alerts.api.services;
 
+import java.io.Serializable;
 import java.util.Map;
 import java.util.Set;
 
@@ -29,7 +30,7 @@ import org.hawkular.alerts.api.model.trigger.Trigger;
  * @author jay shaughnessy
  * @author lucas ponce
  */
-public class DefinitionsEvent {
+public class DefinitionsEvent implements Serializable {
 
     public enum Type {
         ACTION_DEFINITION_CREATE,

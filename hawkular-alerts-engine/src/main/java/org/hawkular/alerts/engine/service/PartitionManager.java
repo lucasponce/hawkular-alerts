@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Red Hat, Inc. and/or its affiliates
+ * Copyright 2015-2017 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +21,7 @@ import java.util.Map;
 
 import org.hawkular.alerts.api.model.data.Data;
 import org.hawkular.alerts.api.model.event.Event;
+import org.hawkular.alerts.api.services.DefinitionsEvent;
 
 /**
  * Interface that defines an abstract API with the clustering services used by the engine.
@@ -121,4 +122,18 @@ public interface PartitionManager {
      * @param dataListener the listener
      */
     void registerDataListener(PartitionDataListener dataListener);
+
+    /**
+     * Notify partition manager when a new collection of definitions events has been received.
+     *
+     * @param definitionsEvents the new definitions events received
+     */
+    void notifyDefinitionsEvents(Collection<DefinitionsEvent> definitionsEvents);
+
+    /**
+     * Register a listener to process partition events linked with definitions events.
+     *
+     * @param definitionsEventsListener the listener
+     */
+    void registerDefinitionsEventsListener(PartitionDefinitionsEventListener definitionsEventsListener);
 }

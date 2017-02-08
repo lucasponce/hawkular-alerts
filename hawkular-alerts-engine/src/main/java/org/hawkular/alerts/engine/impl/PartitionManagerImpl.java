@@ -45,9 +45,11 @@ import javax.ejb.TransactionAttributeType;
 import org.hawkular.alerts.api.model.data.Data;
 import org.hawkular.alerts.api.model.event.Event;
 import org.hawkular.alerts.api.model.trigger.Trigger;
+import org.hawkular.alerts.api.services.DefinitionsEvent;
 import org.hawkular.alerts.api.services.DefinitionsService;
 import org.hawkular.alerts.engine.log.MsgLogger;
 import org.hawkular.alerts.engine.service.PartitionDataListener;
+import org.hawkular.alerts.engine.service.PartitionDefinitionsEventListener;
 import org.hawkular.alerts.engine.service.PartitionManager;
 import org.hawkular.alerts.engine.service.PartitionTriggerListener;
 import org.infinispan.Cache;
@@ -79,6 +81,7 @@ import com.google.common.hash.Hashing;
  *          <local-cache name="partition"/>
  *          <local-cache name="triggers"/>
  *          <local-cache name="data"/>
+ *          <local-cache name="definitionsEvents"/>
  *       </cache-container>
  * [...]
  *
@@ -94,6 +97,9 @@ import com.google.common.hash.Hashing;
  *              <transaction mode="BATCH"/>
  *          </replicated-cache>
  *          <replicated-cache name="data" mode="ASYNC">
+ *              <transaction mode="BATCH"/>
+ *          </replicated-cache>
+ *          <replicated-cache name="definitionsEvents" mode="ASYNC">
  *              <transaction mode="BATCH"/>
  *          </replicated-cache>
  *       </cache-container>
@@ -168,6 +174,13 @@ public class PartitionManagerImpl implements PartitionManager {
     private Cache dataCache;
 
     /**
+     * This cache will be used to propagate definitions events across nodes.
+     * It will hold listeners to notify the change.
+     */
+    @Resource(lookup = "java:jboss/infinispan/cache/hawkular-alerts/definitionsEvents")
+    private Cache definitionsEventsCache;
+
+    /**
      * Representation of the current node in a cluster environment.
      * Computed from Address.hashCode,
      */
@@ -183,10 +196,16 @@ public class PartitionManagerImpl implements PartitionManager {
      */
     private Set<PartitionDataListener> dataListeners = new HashSet<>();
 
+    /**
+     * Listeners used to interact with the definitions partition events
+     */
+    private Set<PartitionDefinitionsEventListener> definitionsEventsListeners = new HashSet<>();
+
     private TopologyChangeListener topologyChangeListener = new TopologyChangeListener();
     private PartitionChangeListener partitionChangeListener = new PartitionChangeListener();
     private NewTriggerListener newTriggerListener = new NewTriggerListener();
     private NewDataListener newDataListener = new NewDataListener();
+    private NewDefinitionsEventListener newDefinitionsEventListener = new NewDefinitionsEventListener();
 
     @Override
     @Lock(LockType.READ)
@@ -222,6 +241,7 @@ public class PartitionManagerImpl implements PartitionManager {
             partitionCache.addListener(partitionChangeListener);
             triggersCache.addListener(newTriggerListener);
             dataCache.addListener(newDataListener);
+            definitionsEventsCache.addListener(newDefinitionsEventListener);
             /*
                 Initial partition
              */
@@ -240,6 +260,7 @@ public class PartitionManagerImpl implements PartitionManager {
             partitionCache.removeListener(partitionChangeListener);
             triggersCache.removeListener(newTriggerListener);
             dataCache.removeListener(newDataListener);
+            definitionsEventsCache.removeListener(newDefinitionsEventListener);
 
             dataCache.stop();
             triggersCache.stop();
@@ -292,12 +313,28 @@ public class PartitionManagerImpl implements PartitionManager {
         dataListeners.add(dataListener);
     }
 
+    @Override
+    public void notifyDefinitionsEvents(Collection<DefinitionsEvent> definitionsEvents) {
+        if (distributed) {
+            NotifyDefinitionsEvent ndEvent = new NotifyDefinitionsEvent(currentNode, definitionsEvents);
+            Integer key = ndEvent.hashCode();
+            log.debugf("Sending definitions events [%s]", ndEvent);
+            definitionsEventsCache.getAdvancedCache().withFlags(Flag.IGNORE_RETURN_VALUES)
+                    .putAsync(key, ndEvent, LIFESPAN, TimeUnit.MILLISECONDS);
+        }
+    }
+
+    @Override
+    public void registerDefinitionsEventsListener(PartitionDefinitionsEventListener definitionsEventsListener) {
+        definitionsEventsListeners.add(definitionsEventsListener);
+    }
+
     /*
-        Calculate a new partition based on the current topology.
-        It should be invoked as a result of a topology event and it is executed by the coordinator node.
-        It updated the new and old partition state on the "partition" cache.
-        This can take some time, avoid timeouts by allowing longer waits for pending client calls
-     */
+            Calculate a new partition based on the current topology.
+            It should be invoked as a result of a topology event and it is executed by the coordinator node.
+            It updated the new and old partition state on the "partition" cache.
+            This can take some time, avoid timeouts by allowing longer waits for pending client calls
+         */
     @AccessTimeout(value = 5, unit = TimeUnit.MINUTES)
     private void processTopologyChange() {
         if (distributed && cacheManager.isCoordinator()) {
@@ -707,7 +744,7 @@ public class PartitionManagerImpl implements PartitionManager {
             }
             NotifyData notifyData = (NotifyData)dataCache.get(cacheEvent.getKey());
             if (log.isDebugEnabled()) {
-                log.debug("onNewNotifyData(@CacheEntryCreated) received.");
+                log.debug("onNewNotifyData(@CacheEntryCreated) received on " + currentNode);
                 log.debug("NotifyData: " + notifyData);
             }
             processNotifyData(notifyData);
@@ -723,18 +760,17 @@ public class PartitionManagerImpl implements PartitionManager {
             }
             NotifyData notifyData = (NotifyData)dataCache.get(cacheEvent.getKey());
             if (log.isDebugEnabled()) {
-                log.debug("onModifiedNotifyData(@CacheEntryModified) received.");
+                log.debug("onModifiedNotifyData(@CacheEntryModified) received on " + currentNode);
                 log.debug("NotifyData: " + notifyData);
             }
             processNotifyData(notifyData);
         }
 
-            /*
-                When a new data/event is added it should be notified on the PartitionManager.
-                PartitionManager adds an entry on "data" cache to fire an event that will propagate the
-                across the nodes invoking previously registered PartitionDataListener.
-             */
-
+        /*
+            When a new data/event is added it should be notified on the PartitionManager.
+            PartitionManager adds an entry on "data" cache to fire an event that will propagate the
+            across the nodes invoking previously registered PartitionDataListener.
+         */
         private void processNotifyData(NotifyData notifyData) {
             /*
                 Finally invoke listener on non-sender nodes
@@ -748,6 +784,62 @@ public class PartitionManagerImpl implements PartitionManager {
                 } else if (notifyData.getEventCollection() != null) {
                     dataListeners.stream().forEach(dataListener -> {
                         dataListener.onNewEvents(notifyData.getEventCollection());
+                    });
+                }
+            }
+        }
+    }
+
+    @Listener
+    public class NewDefinitionsEventListener {
+
+        @CacheEntryCreated
+        public void onNewDefinitionsEvent(CacheEntryCreatedEvent cacheEvent) {
+            if (cacheEvent.isPre()) {
+                if (log.isTraceEnabled()) {
+                    log.trace("Discarding pre onNewDefinitionsEvent(@CacheEntryCreated) event");
+                }
+                return;
+            }
+            NotifyDefinitionsEvent notifyDefEvent =
+                    (NotifyDefinitionsEvent) definitionsEventsCache.get(cacheEvent.getKey());
+            if (log.isDebugEnabled()) {
+                log.debug("onNewDefinitionsEvent(@CacheEntryCreated) received on " + currentNode);
+                log.debug("NotifyDefinitionsEvent: " + notifyDefEvent);
+            }
+            processNotifyDefinitionsEvent(notifyDefEvent);
+        }
+
+        @CacheEntryModified
+        public void onModifiedDefinitionsEvent(CacheEntryModifiedEvent cacheEvent) {
+            if (cacheEvent.isPre()) {
+                if (log.isTraceEnabled()) {
+                    log.trace("Discarding pre onModifiedDefinitionsEvent(@CacheEntryModified) event");
+                }
+                return;
+            }
+            NotifyDefinitionsEvent notifyDefEvent =
+                    (NotifyDefinitionsEvent) definitionsEventsCache.get(cacheEvent.getKey());
+            if (log.isDebugEnabled()) {
+                log.debug("onModifiedDefinitionsEvent(@CacheEntryModified) received on " + currentNode);
+                log.debug("NotifyDefinitionsEvent: " + notifyDefEvent);
+            }
+            processNotifyDefinitionsEvent(notifyDefEvent);
+        }
+
+        /*
+            When a new definitions event is added it should be notified on the PartitionManager.
+            PartitionManager adds an entry on "definitionsEvents" cache to fire an event that will propagate the
+            across the nodes invoking previously registered PartitionDefinitionsEventsListener.
+         */
+        private void processNotifyDefinitionsEvent(NotifyDefinitionsEvent notifyDefEvent) {
+            /*
+                Finally invoke listener on non-sender nodes
+             */
+            if (!definitionsEventsListeners.isEmpty() && notifyDefEvent.getFromNode() != currentNode) {
+                if (notifyDefEvent.getDefinitionsEvents() != null) {
+                    definitionsEventsListeners.stream().forEach(definitionsEventsListener -> {
+                        definitionsEventsListener.onNewDefinitionsEvents(notifyDefEvent.getDefinitionsEvents());
                     });
                 }
             }
@@ -956,6 +1048,58 @@ public class PartitionManagerImpl implements PartitionManager {
                     ", dataCollection=" + dataCollection +
                     ", eventCollection=" + eventCollection +
                     ']';
+        }
+    }
+
+    public static class NotifyDefinitionsEvent implements Serializable {
+        private Integer fromNode = null;
+        private Collection<DefinitionsEvent> definitionsEvents = null;
+
+        public NotifyDefinitionsEvent(Integer fromNode, Collection<DefinitionsEvent> definitionsEvents) {
+            this.fromNode = fromNode;
+            this.definitionsEvents = definitionsEvents;
+        }
+
+        public Integer getFromNode() {
+            return fromNode;
+        }
+
+        public void setFromNode(Integer fromNode) {
+            this.fromNode = fromNode;
+        }
+
+        public Collection<DefinitionsEvent> getDefinitionsEvents() {
+            return definitionsEvents;
+        }
+
+        public void setDefinitionsEvents(Collection<DefinitionsEvent> definitionsEvents) {
+            this.definitionsEvents = definitionsEvents;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            NotifyDefinitionsEvent that = (NotifyDefinitionsEvent) o;
+
+            if (fromNode != null ? !fromNode.equals(that.fromNode) : that.fromNode != null) return false;
+            return definitionsEvents != null ? definitionsEvents.equals(that.definitionsEvents) : that.definitionsEvents == null;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = fromNode != null ? fromNode.hashCode() : 0;
+            result = 31 * result + (definitionsEvents != null ? definitionsEvents.hashCode() : 0);
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "NotifyDefinitionsEvent{" +
+                    "fromNode=" + fromNode +
+                    ", definitionsEvents=" + definitionsEvents +
+                    '}';
         }
     }
 

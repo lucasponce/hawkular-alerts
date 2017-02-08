@@ -107,7 +107,7 @@ public class EventsAggregationExtension implements EventExtension {
         defaultExpiration = properties.getProperty(EVENTS_EXPIRATION, EVENTS_EXPIRATION_ENV, EVENTS_EXTENSIONS_DEFAULT);
         if (engineExtensions) {
             log.info("Registering Trigger CREATE/UPDATE/REMOVE listener");
-            definitions.registerListener(events -> refresh(events), TRIGGER_CREATE, TRIGGER_UPDATE, TRIGGER_REMOVE);
+            definitions.registerListener(events -> refresh(events), true, TRIGGER_CREATE, TRIGGER_UPDATE, TRIGGER_REMOVE);
             extensions.addExtension(this);
         }
     }

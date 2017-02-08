@@ -43,6 +43,7 @@
       <local-cache name="dataIds" />
       <local-cache name="schema"/>
       <local-cache name="globalActions" />
+      <local-cache name="definitionsEvents" />
     </cache-container>
   </xsl:template>
 
