@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Red Hat, Inc. and/or its affiliates
+ * Copyright 2015-2017 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -92,7 +92,7 @@ public class Data implements Comparable<Data>, Serializable {
 
     /** For JSON Construction ONLY */
     public Data() {
-        this(null, 0L, null);
+        this(null, System.currentTimeMillis(), null);
     }
 
     /** For REST API USE ONLY, tenantId set automatically via REST Handler.
