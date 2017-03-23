@@ -121,6 +121,10 @@ public class CassActionsServiceImpl implements ActionsService {
         if (trigger == null) {
             throw new IllegalArgumentException("Trigger must be not null");
         }
+        log.debugf("Sending [%s] [%s]", trigger, event);
+        executor.submit(() -> {
+            alertsContext.notifyWatchers(event);
+        });
         if (!isEmpty(trigger.getActions())) {
             for (TriggerAction triggerAction : trigger.getActions()) {
                 send(triggerAction, event);

@@ -47,6 +47,7 @@ import org.hawkular.alerts.api.model.event.Event;
 import org.hawkular.alerts.api.model.trigger.Trigger;
 import org.hawkular.alerts.api.services.DefinitionsService;
 import org.hawkular.alerts.engine.log.MsgLogger;
+import org.hawkular.alerts.engine.service.PartitionAlertListener;
 import org.hawkular.alerts.engine.service.PartitionDataListener;
 import org.hawkular.alerts.engine.service.PartitionManager;
 import org.hawkular.alerts.engine.service.PartitionTriggerListener;
@@ -79,6 +80,7 @@ import com.google.common.hash.Hashing;
  *          <local-cache name="partition"/>
  *          <local-cache name="triggers"/>
  *          <local-cache name="data"/>
+ *          <local-cache name="alerts"/>
  *       </cache-container>
  * [...]
  *
@@ -94,6 +96,9 @@ import com.google.common.hash.Hashing;
  *              <transaction mode="BATCH"/>
  *          </replicated-cache>
  *          <replicated-cache name="data" mode="ASYNC">
+ *              <transaction mode="BATCH"/>
+ *          </replicated-cache>
+ *          <replicated-cache name="alerts" mode="ASYNC">
  *              <transaction mode="BATCH"/>
  *          </replicated-cache>
  *       </cache-container>
@@ -168,6 +173,13 @@ public class PartitionManagerImpl implements PartitionManager {
     private Cache dataCache;
 
     /**
+     * This cache will be used to propagate a generated/modified event/alert across nodes.
+     * It will hold listeners to notify the change.
+     */
+    @Resource(lookup = "java:jboss/infinispan/cache/hawkular-alerts/alerts")
+    private Cache alertsCache;
+
+    /**
      * Representation of the current node in a cluster environment.
      * Computed from Address.hashCode,
      */
@@ -183,10 +195,16 @@ public class PartitionManagerImpl implements PartitionManager {
      */
     private Set<PartitionDataListener> dataListeners = new HashSet<>();
 
+    /**
+     * Listeners used to interact with the event/alerts partition events
+     */
+    private Set<PartitionAlertListener> alertListeners = new HashSet<>();
+
     private TopologyChangeListener topologyChangeListener = new TopologyChangeListener();
     private PartitionChangeListener partitionChangeListener = new PartitionChangeListener();
     private NewTriggerListener newTriggerListener = new NewTriggerListener();
     private NewDataListener newDataListener = new NewDataListener();
+    private NewAlertListener newAlertListener = new NewAlertListener();
 
     @Override
     @Lock(LockType.READ)
@@ -222,6 +240,7 @@ public class PartitionManagerImpl implements PartitionManager {
             partitionCache.addListener(partitionChangeListener);
             triggersCache.addListener(newTriggerListener);
             dataCache.addListener(newDataListener);
+            alertsCache.addListener(newAlertListener);
             /*
                 Initial partition
              */
@@ -240,7 +259,9 @@ public class PartitionManagerImpl implements PartitionManager {
             partitionCache.removeListener(partitionChangeListener);
             triggersCache.removeListener(newTriggerListener);
             dataCache.removeListener(newDataListener);
+            alertsCache.removeListener(newAlertListener);
 
+            alertsCache.stop();
             dataCache.stop();
             triggersCache.stop();
             partitionCache.stop();
@@ -292,12 +313,28 @@ public class PartitionManagerImpl implements PartitionManager {
         dataListeners.add(dataListener);
     }
 
+    @Override
+    public void notifyAlert(Event event) {
+        if (distributed) {
+            NotifyAlert nAlert = new NotifyAlert(currentNode, event);
+            Integer key = nAlert.hashCode();
+            log.debugf("Sending alert [%s]", nAlert);
+            alertsCache.getAdvancedCache().withFlags(Flag.IGNORE_RETURN_VALUES)
+                    .putAsync(key, nAlert, LIFESPAN, TimeUnit.MILLISECONDS);
+        }
+    }
+
+    @Override
+    public void registerAlertListener(PartitionAlertListener alertListener) {
+        alertListeners.add(alertListener);
+    }
+
     /*
-        Calculate a new partition based on the current topology.
-        It should be invoked as a result of a topology event and it is executed by the coordinator node.
-        It updated the new and old partition state on the "partition" cache.
-        This can take some time, avoid timeouts by allowing longer waits for pending client calls
-     */
+                Calculate a new partition based on the current topology.
+                It should be invoked as a result of a topology event and it is executed by the coordinator node.
+                It updated the new and old partition state on the "partition" cache.
+                This can take some time, avoid timeouts by allowing longer waits for pending client calls
+             */
     @AccessTimeout(value = 5, unit = TimeUnit.MINUTES)
     private void processTopologyChange() {
         if (distributed && cacheManager.isCoordinator()) {
@@ -729,12 +766,11 @@ public class PartitionManagerImpl implements PartitionManager {
             processNotifyData(notifyData);
         }
 
-            /*
-                When a new data/event is added it should be notified on the PartitionManager.
-                PartitionManager adds an entry on "data" cache to fire an event that will propagate the
-                across the nodes invoking previously registered PartitionDataListener.
-             */
-
+        /*
+            When a new data/event is added it should be notified on the PartitionManager.
+            PartitionManager adds an entry on "data" cache to fire an event that will propagate the
+            across the nodes invoking previously registered PartitionDataListener.
+         */
         private void processNotifyData(NotifyData notifyData) {
             /*
                 Finally invoke listener on non-sender nodes
@@ -750,6 +786,59 @@ public class PartitionManagerImpl implements PartitionManager {
                         dataListener.onNewEvents(notifyData.getEventCollection());
                     });
                 }
+            }
+        }
+    }
+
+    @Listener
+    public class NewAlertListener {
+
+        @CacheEntryCreated
+        public void onNewNotifyAlert(CacheEntryCreatedEvent cacheEvent) {
+            if (cacheEvent.isPre()) {
+                if (log.isTraceEnabled()) {
+                    log.trace("Discarding pre onNewNotifyAlert(@CacheEntryCreated) event");
+                }
+                return;
+            }
+            NotifyAlert notifyAlert = (NotifyAlert)alertsCache.get(cacheEvent.getKey());
+            if (log.isDebugEnabled()) {
+                log.debug("onNewNotifyAlert(@CacheEntryCreated) received.");
+                log.debug("NotifyAlert: " + notifyAlert);
+            }
+            processNotifyAlert(notifyAlert);
+        }
+
+        @CacheEntryModified
+        public void onModifiedNotifyAlert(CacheEntryModifiedEvent cacheEvent) {
+            if (cacheEvent.isPre()) {
+                if (log.isTraceEnabled()) {
+                    log.trace("Discarding pre onModifiedNotifyAlert(@CacheEntryModified) event");
+                }
+                return;
+            }
+            NotifyAlert notifyAlert = (NotifyAlert)alertsCache.get(cacheEvent.getKey());
+            if (log.isDebugEnabled()) {
+                log.debug("onModifiedNotifyAlert(@CacheEntryModified) received.");
+                log.debug("NotifyAlert: " + notifyAlert);
+            }
+            processNotifyAlert(notifyAlert);
+        }
+
+        /*
+            When a new event/alert is generated it should be notified on the PartitionManager.
+            PartitionManager adds an entry on "alerts" cache to fire an event that will propagate the
+            across the nodes invoking previously registered PartitionDataListener.
+         */
+        private void processNotifyAlert(NotifyAlert notifyAlert) {
+            /*
+                Finally invoke listener on non-sender nodes
+             */
+            if (!alertListeners.isEmpty() && notifyAlert.getFromNode() != currentNode) {
+                alertListeners.stream().forEach(eventListener -> {
+                    log.debugf("processNotifyAlert [%s]", notifyAlert);
+                    eventListener.onNewEvent(notifyAlert.getEvent());
+                });
             }
         }
     }
@@ -956,6 +1045,62 @@ public class PartitionManagerImpl implements PartitionManager {
                     ", dataCollection=" + dataCollection +
                     ", eventCollection=" + eventCollection +
                     ']';
+        }
+    }
+
+    /**
+     * Auxiliary class to store in the cache an operation for a Event/Alert
+     * Used internally in the context of the PartitionManager services.
+     */
+    public static class NotifyAlert implements Serializable {
+        private Integer fromNode = null;
+        private Event event = null;
+
+        public NotifyAlert(Integer fromNode, Event event) {
+            this.fromNode = fromNode;
+            this.event = event;
+        }
+
+        public Integer getFromNode() {
+            return fromNode;
+        }
+
+        public void setFromNode(Integer fromNode) {
+            this.fromNode = fromNode;
+        }
+
+        public Event getEvent() {
+            return event;
+        }
+
+        public void setEvent(Event event) {
+            this.event = event;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            NotifyAlert that = (NotifyAlert) o;
+
+            if (fromNode != null ? !fromNode.equals(that.fromNode) : that.fromNode != null) return false;
+            return event != null ? event.equals(that.event) : that.event == null;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = fromNode != null ? fromNode.hashCode() : 0;
+            result = 31 * result + (event != null ? event.hashCode() : 0);
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "NotifyAlert{" +
+                    "fromNode=" + fromNode +
+                    ", event=" + event +
+                    '}';
         }
     }
 

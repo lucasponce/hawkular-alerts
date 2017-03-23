@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Red Hat, Inc. and/or its affiliates
+ * Copyright 2015-2017 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -172,7 +172,7 @@ public class IncomingDataManagerImpl implements IncomingDataManager {
                 prev = d;
             } else {
                 if ((d.getTimestamp() - prev.getTimestamp()) < minReportingIntervalData) {
-                    log.tracef("MinReportingInterval violation, prev: %s, removed: %s", prev, d);
+                    log.debugf("MinReportingInterval violation, prev: %s, removed: %s", prev, d);
                     i.remove();
                 }
             }
@@ -191,7 +191,7 @@ public class IncomingDataManagerImpl implements IncomingDataManager {
                 prev = e;
             } else {
                 if ((e.getCtime() - prev.getCtime()) < minReportingIntervalEvents) {
-                    log.tracef("MinReportingInterval violation, prev: %s, removed: %s", prev, e);
+                    log.debugf("MinReportingInterval violation, prev: %s, removed: %s", prev, e);
                     i.remove();
                 }
             }

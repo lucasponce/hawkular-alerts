@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Red Hat, Inc. and/or its affiliates
+ * Copyright 2015-2017 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -121,4 +121,18 @@ public interface PartitionManager {
      * @param dataListener the listener
      */
     void registerDataListener(PartitionDataListener dataListener);
+
+    /**
+     * Notify partition manager when a new event/alert has been generated/modified.
+     *
+     * @param event the event/alert generated/modified
+     */
+    void notifyAlert(Event event);
+
+    /**
+     * Register a listener to process partition events linked with events/alerts.
+     *
+     * @param alertListener the listener
+     */
+    void registerAlertListener(PartitionAlertListener alertListener);
 }

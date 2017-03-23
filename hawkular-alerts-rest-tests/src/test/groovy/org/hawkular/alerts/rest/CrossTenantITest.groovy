@@ -81,6 +81,24 @@ class CrossTenantITest extends AbstractITestBase {
         def start = System.currentTimeMillis();
 
         List<String> tenantIds = ["tenant1", "tenant2", "tenant3", "tenant4"];
+
+        def watcherRun = true;
+        def notificationCount = 0;
+
+        Thread.start {
+            URL watcherUrl = new URL(baseURI + "admin/watcher")
+            HttpURLConnection conn = watcherUrl.openConnection()
+            conn.setRequestMethod("GET")
+            conn.setRequestProperty("Hawkular-Tenant", "tenant1,tenant2,tenant3,tenant4")
+            BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()))
+            def notification
+            while (watcherRun && ( (notification = reader.readLine()) != null )) {
+                logger.info(notification)
+                notificationCount++
+            }
+            reader.close()
+        }
+
         generateAlertsForMultipleTenants(tenantIds, 5);
 
         client.headers.put("Hawkular-Tenant", "tenant1,tenant2,tenant3,tenant4")
@@ -105,6 +123,7 @@ class CrossTenantITest extends AbstractITestBase {
                 break;
             }
         }
+        watcherRun = false
         if (cluster) {
             logger.info("Alerts generated: ")
             for (int i = 0; i < resp.data.size(); i++) {
@@ -113,6 +132,7 @@ class CrossTenantITest extends AbstractITestBase {
         }
         assertEquals(200, resp.status)
         assertEquals(20, resp.data.size())
+        assertEquals(20, notificationCount)
     }
 
 }

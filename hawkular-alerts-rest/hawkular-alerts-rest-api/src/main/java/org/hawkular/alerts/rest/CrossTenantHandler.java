@@ -23,9 +23,18 @@ import static org.hawkular.alerts.rest.CommonUtil.parseTagQuery;
 import static org.hawkular.alerts.rest.CommonUtil.parseTags;
 import static org.hawkular.alerts.rest.HawkularAlertsApp.TENANT_HEADER_NAME;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+import javax.annotation.PreDestroy;
 import javax.ejb.EJB;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
@@ -34,14 +43,17 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 
+import org.hawkular.alerts.api.json.JsonUtil;
 import org.hawkular.alerts.api.model.event.Alert;
 import org.hawkular.alerts.api.model.event.Event;
 import org.hawkular.alerts.api.model.paging.Page;
 import org.hawkular.alerts.api.model.paging.Pager;
 import org.hawkular.alerts.api.services.AlertsCriteria;
 import org.hawkular.alerts.api.services.AlertsService;
+import org.hawkular.alerts.api.services.AlertsWatcher;
 import org.hawkular.alerts.api.services.EventsCriteria;
 import org.jboss.logging.Logger;
 
@@ -61,6 +73,8 @@ import io.swagger.annotations.ApiResponses;
 @Api(value = "/admin", description = "Cross tenant Operations")
 public class CrossTenantHandler {
     private static final Logger log = Logger.getLogger(CrossTenantHandler.class);
+    private static long WATCHER_TIMEOUT = 2000;
+    private static AlertsComparator WATCHER_COMPARATOR = new AlertsComparator();
 
     @HeaderParam(TENANT_HEADER_NAME)
     String tenantId;
@@ -70,6 +84,13 @@ public class CrossTenantHandler {
 
     public CrossTenantHandler() {
         log.debug("Creating instance.");
+    }
+
+    boolean active = true;
+
+    @PreDestroy
+    public void stop() {
+        active = false;
     }
 
     @GET
@@ -288,6 +309,78 @@ public class CrossTenantHandler {
                 return ResponseUtil.badRequest("Bad arguments: " + e.getMessage());
             }
             return ResponseUtil.internalError(e);
+        }
+    }
+
+    @GET
+    @Path("/watcher")
+    @Produces(APPLICATION_JSON)
+    public Response watchAlerts() throws Exception {
+        final Set<String> tenantIds = getTenants(tenantId);
+        StreamingOutput streamingOutput = output -> {
+            Writer writer = new BufferedWriter(new OutputStreamWriter(output));
+            final List<Event> buffer = new ArrayList<>();
+            final AlertsWatcher watcher = new AlertsWatcher() {
+                @Override
+                public boolean isWatchable(String tenantId) {
+                    return tenantIds.contains(tenantId);
+                }
+
+                @Override
+                public void watch(Event event) {
+                    synchronized (buffer) {
+                        buffer.add(event);
+                    }
+                }
+            };
+            try {
+                alertsService.registerWatcher(watcher);
+                while(active) {
+                    if (!buffer.isEmpty()) {
+                        synchronized (buffer) {
+                            Collections.sort(buffer, WATCHER_COMPARATOR);
+                            for (Event event : buffer) {
+                                writer.write(JsonUtil.toJson(event) + "\n");
+                                writer.flush();
+                            }
+                            buffer.clear();
+                        }
+                    }
+                    Thread.sleep(WATCHER_TIMEOUT);
+                }
+            } catch (IOException e) {
+                log.debugf("Watcher %s disconnected.", watcher);
+            } catch (Exception e) {
+                log.error(e);
+            }
+            if (active) {
+                try {
+                    alertsService.unregisterWatcher(watcher);
+                } catch (Exception e) {
+                    log.error(e);
+                }
+            }
+        };
+        return Response.ok(streamingOutput).build();
+    }
+
+    private static class AlertsComparator implements Comparator<Event> {
+        @Override
+        public int compare(Event o1, Event o2) {
+            if (o1 == null || o2 == null) {
+                return 0;
+            }
+            long time1 = o1.getCtime();
+            long time2 = o2.getCtime();
+            if (o1 instanceof Alert) {
+                Alert.LifeCycle status1 = ((Alert)o1).getCurrentLifecycle();
+                time1 = status1 != null ? status1.getStime() : time1;
+            }
+            if (o2 instanceof Alert) {
+                Alert.LifeCycle status2 = ((Alert)o2).getCurrentLifecycle();
+                time2 = status2 != null ? status2.getStime() : time2;
+            }
+            return (time1 < time2) ? -1 : ((time1 == time2) ? 0 : 1);
         }
     }
 

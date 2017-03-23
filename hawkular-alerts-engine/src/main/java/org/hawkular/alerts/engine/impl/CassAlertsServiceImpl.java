@@ -62,6 +62,7 @@ import org.hawkular.alerts.api.model.trigger.Trigger;
 import org.hawkular.alerts.api.services.ActionsService;
 import org.hawkular.alerts.api.services.AlertsCriteria;
 import org.hawkular.alerts.api.services.AlertsService;
+import org.hawkular.alerts.api.services.AlertsWatcher;
 import org.hawkular.alerts.api.services.DefinitionsService;
 import org.hawkular.alerts.api.services.EventsCriteria;
 import org.hawkular.alerts.api.services.PropertiesService;
@@ -113,6 +114,9 @@ public class CassAlertsServiceImpl implements AlertsService {
     private int criteriaNoQuerySize;
     private int batchSize;
     private final BatchStatement.Type batchType = BatchStatement.Type.LOGGED;
+
+    @EJB
+    AlertsContext alertsContext;
 
     @EJB
     AlertsEngine alertsEngine;
@@ -1949,6 +1953,16 @@ public class CassAlertsServiceImpl implements AlertsService {
         }
 
         incomingDataManager.bufferEvents(new IncomingEvents(events, !ignoreFiltering));
+    }
+
+    @Override
+    public void registerWatcher(AlertsWatcher watcher) throws Exception {
+        alertsContext.registerWatcher(watcher);
+    }
+
+    @Override
+    public void unregisterWatcher(AlertsWatcher watcher) throws Exception {
+        alertsContext.unregisterWatcher(watcher);
     }
 
     private void sendAction(Alert a) {

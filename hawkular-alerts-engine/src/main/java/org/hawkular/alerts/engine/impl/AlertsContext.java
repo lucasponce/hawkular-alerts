@@ -32,7 +32,9 @@ import javax.ejb.EJB;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 
+import org.hawkular.alerts.api.model.event.Event;
 import org.hawkular.alerts.api.services.ActionListener;
+import org.hawkular.alerts.api.services.AlertsWatcher;
 import org.hawkular.alerts.api.services.DefinitionsEvent;
 import org.hawkular.alerts.api.services.DefinitionsEvent.Type;
 import org.hawkular.alerts.api.services.DefinitionsListener;
@@ -59,6 +61,8 @@ public class AlertsContext {
     List<ActionListener> actionsListeners = new CopyOnWriteArrayList<>();
 
     List<DistributedListener> distributedListener = new CopyOnWriteArrayList<>();
+
+    List<AlertsWatcher> alertsWatchers = new CopyOnWriteArrayList<>();
 
     private boolean distributed = false;
 
@@ -98,6 +102,10 @@ public class AlertsContext {
                     distributedListener.stream().forEach(listener -> listener.onChange(events));
                 }
             });
+
+            partitionManager.registerAlertListener(event -> alertsWatchers.stream()
+                            .filter(watcher -> watcher.isWatchable(event.getTenantId()))
+                            .forEach(watcher -> watcher.watch(event)));
         }
     }
 
@@ -147,6 +155,31 @@ public class AlertsContext {
         if (!distributed) {
             distributedListener.stream().forEach(listener -> listener.onChange(mapDistributedEvents(notifications)));
         }
+    }
+
+    public void notifyWatchers(Event event) {
+        alertsWatchers.stream()
+                .filter(watcher -> watcher.isWatchable(event.getTenantId()))
+                .forEach(watcher -> watcher.watch(event));
+        if (distributed) {
+            partitionManager.notifyAlert(event);
+        }
+    }
+
+    public void registerWatcher(AlertsWatcher watcher) {
+        if (watcher == null) {
+            throw new IllegalArgumentException("AlertsWatcher must not be null");
+        }
+        alertsWatchers.add(watcher);
+        log.debugf("Added watcher %s %s", watcher, alertsWatchers);
+    }
+
+    public void unregisterWatcher(AlertsWatcher watcher) {
+        if (watcher == null) {
+            throw new IllegalArgumentException("AlertsWatcher must not be null");
+        }
+        alertsWatchers.remove(watcher);
+        log.debugf("Removed watcher %s %s", watcher, alertsWatchers);
     }
 
     private boolean shouldNotify(Set<DefinitionsEvent.Type> listenerTypes, Set<DefinitionsEvent.Type> eventTypes) {
