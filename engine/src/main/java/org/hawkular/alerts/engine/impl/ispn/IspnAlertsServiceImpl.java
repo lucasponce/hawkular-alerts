@@ -207,6 +207,11 @@ public class IspnAlertsServiceImpl implements AlertsService {
                }
                query.append(") ");
            }
+           if (criteria.hasTagQueryCriteria()) {
+               query.append("and (");
+               parseTagQuery(criteria.getTagQuery(), query);
+               query.append(") ");
+           }
         }
 
         List<Alert> alerts = queryFactory.create(query.toString()).list();
@@ -308,5 +313,9 @@ public class IspnAlertsServiceImpl implements AlertsService {
             Collections.sort(alerts, comparator);
             return new Page<>(alerts, pager, alerts.size());
         }
+    }
+
+    private void parseTagQuery(String tagQuery, StringBuilder query) {
+        // TODO Parse tagQuery
     }
 }

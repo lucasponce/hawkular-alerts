@@ -26,9 +26,11 @@ import java.util.UUID;
 import org.hawkular.alerts.api.model.condition.ConditionEval;
 import org.hawkular.alerts.api.model.dampening.Dampening;
 import org.hawkular.alerts.api.model.data.Data;
+import org.hawkular.alerts.api.model.index.TagsBridge;
 import org.hawkular.alerts.api.model.trigger.Trigger;
 import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;
+import org.hibernate.search.annotations.FieldBridge;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.Store;
 
@@ -152,6 +154,7 @@ public class Event implements Comparable<Event>, Serializable {
             "Tags can be used as part of Event conditions expressions and criteria in finder methods. + \n" +
             "Tag value cannot be null.",
             position = 9)
+    @FieldBridge(impl = TagsBridge.class)
     @JsonInclude(Include.NON_EMPTY)
     protected Map<String, String> tags;
 

@@ -20,6 +20,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
 import java.util.Set;
 
 import org.hawkular.alerts.api.model.Severity;
@@ -119,6 +120,11 @@ public class Alert extends Event {
     // TODO Workaround for infinispan/objectfilter
     public String getTenantId() {
         return tenantId;
+    }
+
+    // TODO Workaround for infinispan/objectfilter
+    public Map<String, String> getTags() {
+        return tags;
     }
 
     @JsonIgnore
