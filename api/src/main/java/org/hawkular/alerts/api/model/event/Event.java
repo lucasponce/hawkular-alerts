@@ -26,13 +26,7 @@ import java.util.UUID;
 import org.hawkular.alerts.api.model.condition.ConditionEval;
 import org.hawkular.alerts.api.model.dampening.Dampening;
 import org.hawkular.alerts.api.model.data.Data;
-import org.hawkular.alerts.api.model.index.TagsBridge;
 import org.hawkular.alerts.api.model.trigger.Trigger;
-import org.hibernate.search.annotations.Analyze;
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.FieldBridge;
-import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.Store;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -66,7 +60,6 @@ import io.swagger.annotations.ApiModelProperty;
 @JsonSubTypes({
         @Type(name = "EVENT", value = Event.class),
         @Type(name = "ALERT", value = Alert.class) })
-@Indexed(index = "event")
 public class Event implements Comparable<Event>, Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -78,14 +71,12 @@ public class Event implements Comparable<Event>, Serializable {
             "by the system for serialization purposes.",
             position = 0,
             allowableValues = "EVENT, ALERT")
-    @Field(store = Store.YES, analyze = Analyze.NO)
     @JsonInclude
     protected String eventType;
 
     @ApiModelProperty(value = "Tenant id owner of this event.",
             position = 1,
             allowableValues = "Tenant is overwritten from Hawkular-Tenant HTTP header parameter request")
-    @Field(store = Store.YES, analyze = Analyze.NO)
     @JsonInclude
     protected String tenantId;
 
@@ -154,7 +145,6 @@ public class Event implements Comparable<Event>, Serializable {
             "Tags can be used as part of Event conditions expressions and criteria in finder methods. + \n" +
             "Tag value cannot be null.",
             position = 9)
-    @FieldBridge(impl = TagsBridge.class)
     @JsonInclude(Include.NON_EMPTY)
     protected Map<String, String> tags;
 
@@ -258,6 +248,27 @@ public class Event implements Comparable<Event>, Serializable {
     public Event(Alert alert) {
         this(alert.getTenantId(), alert.getTrigger(), alert.getDampening(), alert.getEvalSets());
         this.eventType = alert.getEventType();
+    }
+
+    // TODO [lponce] validate if this constructor is enough
+    public Event(Event event) {
+        if (event == null) {
+            throw new IllegalArgumentException("event must be not null");
+        }
+        this.tenantId = event.getTenantId();
+        this.trigger = event.getTrigger();
+        this.dampening = event.getDampening() != null ? new Dampening(event.getDampening()) : null;
+        // evalSets are maintained as reference as it is a mostly read-only field
+        this.evalSets = event.getEvalSets();
+        this.eventType = event.getEventType();
+        this.ctime = event.getCtime();
+        this.id = event.getId();
+        this.dataSource = event.getDataSource();
+        this.dataId = event.getDataId();
+        this.context = new HashMap<>(event.getContext());
+        this.category = event.getCategory();
+        this.text = event.getText();
+        this.tags = new HashMap<>(event.getTags());
     }
 
     public Event(String tenantId, Trigger trigger, Dampening dampening, List<Set<ConditionEval>> evalSets) {
