@@ -101,8 +101,7 @@
     <version.org.drools>6.4.0.Final</version.org.drools>
     <version.org.elasticsearch.client>5.2.2</version.org.elasticsearch.client>
     <version.org.freemarker>2.3.23</version.org.freemarker>
-    <!-- version.org.hawkular.commons>0.9.7.Final-SRC-revision-82c1b9b95b0f8de65bec4a8f0ac6264e77619756</version.org.hawkular.commons -->
-    <version.org.hawkular.commons>0.9.7.Final-SNAPSHOT</version.org.hawkular.commons>
+    <version.org.hawkular.commons>0.9.7.Final-SRC-revision-b76074c26ebad20064f2a0b8185c5f6b1a11b415</version.org.hawkular.commons>
     <version.org.hibernate>5.7.0.Final</version.org.hibernate>
     <version.org.infinispan.wildfly>9.0.0.Final</version.org.infinispan.wildfly>
     <version.org.jboss.logging>3.3.1.Final</version.org.jboss.logging>
