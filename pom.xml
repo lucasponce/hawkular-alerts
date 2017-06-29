@@ -101,7 +101,8 @@
     <version.org.drools>6.4.0.Final</version.org.drools>
     <version.org.elasticsearch.client>5.2.2</version.org.elasticsearch.client>
     <version.org.freemarker>2.3.23</version.org.freemarker>
-    <version.org.hawkular.commons>0.9.7.Final-SRC-revision-36d3fb2eeeb46e93219c3f5ab14dc34881832759</version.org.hawkular.commons>
+    <!-- version.org.hawkular.commons>0.9.7.Final-SRC-revision-82c1b9b95b0f8de65bec4a8f0ac6264e77619756</version.org.hawkular.commons -->
+    <version.org.hawkular.commons>0.9.7.Final-SNAPSHOT</version.org.hawkular.commons>
     <version.org.hibernate>5.7.0.Final</version.org.hibernate>
     <version.org.infinispan.wildfly>9.0.0.Final</version.org.infinispan.wildfly>
     <version.org.jboss.logging>3.3.1.Final</version.org.jboss.logging>
@@ -112,6 +113,7 @@
     <version.org.yaml>1.11</version.org.yaml>
     <version.org.wildfly.plugins>1.2.0.Alpha1</version.org.wildfly.plugins>
     <version.pl.project13.maven>2.2.1</version.pl.project13.maven>
+    <distribution.name>hawkular-alerting</distribution.name>
   </properties>
 
   <profiles>
@@ -129,6 +131,7 @@
         <module>filter-api</module>
         <module>itests</module>
         <module>rest-handlers</module>
+        <module>dist</module>
         <!--module>hawkular-alerters</module-->
       </modules>
     </profile>
