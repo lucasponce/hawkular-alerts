@@ -19,7 +19,7 @@ JAVA_OPTS="$JAVA_OPTS -Xmx64m -Xms64m"
 JAVA_OPTS="$JAVA_OPTS -Djava.net.preferIPv4Stack=true -Djgroups.bind_addr=${JGROUPS_BIND_ADDR}"
 JAVA_OPTS="$JAVA_OPTS -Dmail.smtp.port=2525"
 JAVA_OPTS="$JAVA_OPTS -Dlog4j.configurationFile=src/test/resources/log4j2.xml"
-# JAVA_OPTS="$JAVA_OPTS -agentlib:jdwp=transport=dt_socket,address=8787,server=y,suspend=y"
+JAVA_OPTS="$JAVA_OPTS -agentlib:jdwp=transport=dt_socket,address=8787,server=y,suspend=y"
 
 # [lponce] Ispn needs to activate a service from lucene jar and for some reason in standalone mode jar needs to be placed first in classpath
 HWK_CLASSPATH=""

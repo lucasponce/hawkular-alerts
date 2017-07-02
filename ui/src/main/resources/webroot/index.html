@@ -1,0 +1,44 @@
+<!doctype html>
+<html ng-app="patternfly.charts">
+  <head>
+    <script src="https://www.patternfly.org/angular-patternfly/grunt-scripts/jquery.js"></script>
+    <script src="https://www.patternfly.org/angular-patternfly/grunt-scripts/jquery-ui.min.js"></script>
+    <script src="https://www.patternfly.org/angular-patternfly/grunt-scripts/jquery.dataTables.js"></script>
+    <script src="https://www.patternfly.org/angular-patternfly/grunt-scripts/dataTables.select.js"></script>
+    <script src="https://www.patternfly.org/angular-patternfly/grunt-scripts/moment.js"></script>
+    <script src="https://www.patternfly.org/angular-patternfly/grunt-scripts/d3.js"></script>
+    <script src="https://www.patternfly.org/angular-patternfly/grunt-scripts/c3.js"></script>
+    <script src="https://www.patternfly.org/angular-patternfly/grunt-scripts/patternfly-settings.js"></script>
+    <script src="https://www.patternfly.org/angular-patternfly/grunt-scripts/patternfly-settings-colors.js"></script>
+    <script src="https://www.patternfly.org/angular-patternfly/grunt-scripts/patternfly-settings-charts.js"></script>
+    <script src="https://www.patternfly.org/angular-patternfly/grunt-scripts/angular.js"></script>
+    <script src="https://www.patternfly.org/angular-patternfly/grunt-scripts/angular-dragdrop.js"></script>
+    <script src="https://www.patternfly.org/angular-patternfly/grunt-scripts/angular-datatables.min.js"></script>
+    <script src="https://www.patternfly.org/angular-patternfly/grunt-scripts/angular-datatables.select.min.js"></script>
+    <script src="https://www.patternfly.org/angular-patternfly/grunt-scripts/angular-sanitize.js"></script>
+    <script src="https://www.patternfly.org/angular-patternfly/grunt-scripts/angular-animate.js"></script>
+    <script src="https://www.patternfly.org/angular-patternfly/grunt-scripts/ui-bootstrap-tpls.js"></script>
+    <script src="https://www.patternfly.org/angular-patternfly/grunt-scripts/angular-bootstrap-prettify.js"></script>
+    <script src="https://www.patternfly.org/angular-patternfly/grunt-scripts/lodash.min.js"></script>
+    <script src="https://www.patternfly.org/angular-patternfly/grunt-scripts/angular-patternfly.js"></script>
+    <script src="https://www.patternfly.org/angular-patternfly/grunt-scripts/angular-ui-router.min.js"></script>
+    <script src="https://www.patternfly.org/angular-patternfly/grunt-scripts/angular-drag-and-drop-lists.js"></script>
+    <script src="ui/script.js"></script>
+  </head>
+  <body>
+    <h1>Hello World from Hawkular Alerting</h1>
+    <div ng-controller="ChartCtrl">
+       <pf-c3-chart id="chartId" config="chartConfig" get-chart-callback="getChart"></pf-c3-chart>
+    
+       <form role="form" style="width:300px">
+         Total = {{total}}, Used = {{used}}, Available = {{available}}
+         <div class="form-group">
+           <label>Used</label>
+           <input type="text" class="form-control" ng-model="newUsed">
+         </div>
+         <input type="button" ng-click="submitform(newUsed)" value="Set Used" />
+         <input type="button" ng-click="focusUsed()" value="Focus Used" />
+       </form>
+    </div>
+  </body>
+</html>
