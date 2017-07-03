@@ -6,7 +6,9 @@ angular.module ('hwk.appModule', [
   'patternfly',
   'patternfly.toolbars',
   'patternfly.charts',
-  'hwk.dashboardModule'
+  'hwk.dashboardModule',
+  'hwk.triggersModule',
+  'hwk.actionsModule'
 ]).config(['$routeProvider', '$translateProvider',
   function ($routeProvider, $translateProvider) {
     'use strict';
@@ -17,6 +19,12 @@ angular.module ('hwk.appModule', [
       })
       .when('/dashboard', {
         templateUrl: 'src/dashboard/dashboard.html'
+      })
+      .when('/triggers', {
+        templateUrl: 'src/triggers/triggers.html'
+      })
+      .when('/actions', {
+        templateUrl: 'src/actions/actions.html'
       })
 
       // Default

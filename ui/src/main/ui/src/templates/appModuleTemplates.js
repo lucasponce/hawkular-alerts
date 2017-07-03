@@ -1,6 +1,11 @@
 angular.module('hwk.appModule').run(['$templateCache', function($templateCache) {
   'use strict';
 
+  $templateCache.put('src/actions/actions.html',
+    "<div class=\"container-fluid\"><div class=\"row\"><div class=\"col-md-12\"><h1>Actions</h1><hr><div class=\"list-group list-view-pf\"><div class=\"list-group-item list-view-pf-stacked\"><div class=\"list-view-pf-actions\"><button class=\"btn btn-default\">Action</button><div class=\"dropdown pull-right dropdown-kebab-pf\"><button class=\"btn btn-link dropdown-toggle\" type=\"button\" id=\"dropdownKebabRight15\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"true\"><span class=\"fa fa-ellipsis-v\"></span></button><ul class=\"dropdown-menu dropdown-menu-right\" aria-labelledby=\"dropdownKebabRight15\"><li><a href=\"#\">Action</a></li><li><a href=\"#\">Another action</a></li><li><a href=\"#\">Something else here</a></li><li role=\"separator\" class=\"divider\"></li><li><a href=\"#\">Separated link</a></li></ul></div></div><div class=\"list-view-pf-main-info\"><div class=\"list-view-pf-left\"><span class=\"fa fa-plane list-view-pf-icon-lg\"></span></div><div class=\"list-view-pf-body\"><div class=\"list-view-pf-description\"><div class=\"list-group-item-heading\">Event One <small>Feb 23, 2015 12:32 am</small></div><div class=\"list-group-item-text\">The following snippet of text is <a href=\"#\">rendered as link text</a>.</div></div><div class=\"list-view-pf-additional-info\"><div class=\"list-view-pf-additional-info-item list-view-pf-additional-info-item-donut-chart\"><span id=\"donut-chart-1\"></span></div><div class=\"list-view-pf-additional-info-item list-view-pf-additional-info-item-donut-chart\"><span id=\"donut-chart-2\"></span></div><div class=\"list-view-pf-additional-info-item list-view-pf-additional-info-item-donut-chart\"><span id=\"donut-chart-3\"></span></div><div class=\"list-view-pf-additional-info-item list-view-pf-additional-info-item-donut-chart\"><span id=\"donut-chart-4\"></span></div></div></div></div></div></div></div></div></div><!-- /container -->"
+  );
+
+
   $templateCache.put('src/app/controllers/heading.html',
     "<span class=\"heading-class\">{{notificationGroup.heading}}</span> <span class=\"panel-counter sub-heading\">{{notificationGroup.unreadCount}} New {{notificationGroup.heading}}</span>"
   );
@@ -122,6 +127,11 @@ angular.module('hwk.appModule').run(['$templateCache', function($templateCache) 
     "                  type: 'area'\n" +
     "                };\n" +
     "                var chart6 = c3.generate(sparklineConfig);</script></div></div></div></div></div></div><!-- /row --></div><!-- /container -->"
+  );
+
+
+  $templateCache.put('src/triggers/triggers.html',
+    "<div class=\"container-fluid\"><div class=\"row\"><div class=\"col-md-12\"><h1>Triggers</h1><table class=\"datatable table table-striped table-bordered\"><thead><tr><th>Id<th>Name<th>Description<th>Actions<th>Enabled<tbody><tr><td>hello-world-trigger<td>Hello World Trigger<td>A mandatory Hello World Trigger<td><i class=\"fa fa-envelope-o\"></i> notify-to-admins<td><i class=\"fa fa-check\"></i></table></div></div></div><!-- /container -->"
   );
 
 }]);

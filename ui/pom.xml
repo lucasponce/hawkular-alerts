@@ -33,6 +33,13 @@
               <resources>
                 <resource>
                   <directory>src/main/ui</directory>
+                  <excludes>
+                    <exclude>**/index.html</exclude>
+                    <exclude>**/node_modules/**</exclude>
+                    <exclude>**/bower_components/**</exclude>
+                    <exclude>**/.sass-cache/**</exclude>
+                    <exclude>**/dist/**</exclude>
+                  </excludes>
                   <filtering>false</filtering>
                 </resource>
               </resources>

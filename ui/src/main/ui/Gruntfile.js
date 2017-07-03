@@ -171,18 +171,6 @@ module.exports = function (grunt) {
         src:  ['src/**/*.js'],
         dest: '<%= projectSettings.dist %>/'
       },
-      fonts: {
-        expand: true,
-        cwd: 'bower_components/patternfly/dist/',
-        src: ['fonts/**'],
-        dest: '<%= projectSettings.dist %>/styles/'
-      },
-      fontawesome: {
-        expand: true,
-        cwd: 'bower_components/patternfly/components/font-awesome',
-        src: ['fonts/**'],
-        dest: '<%= projectSettings.dist %>/components/font-awesome/'
-      },
       img: {
         files: [
           {
@@ -259,7 +247,25 @@ module.exports = function (grunt) {
           {
             expand: true,
             cwd: '.',
-            src: ['bower_components/patternfly/dist/fonts/*'],
+            src: ['bower_components/patternfly/dist/fonts/fontawesome-webfont.woff'],
+            dest: '<%= projectSettings.dist %>'
+          },
+          {
+            expand: true,
+            cwd: '.',
+            src: ['bower_components/patternfly/dist/fonts/fontawesome-webfont.woff2'],
+            dest: '<%= projectSettings.dist %>'
+          },
+          {
+            expand: true,
+            cwd: '.',
+            src: ['bower_components/patternfly/dist/fonts/OpenSans-*-webfont.woff'],
+            dest: '<%= projectSettings.dist %>'
+          },
+          {
+            expand: true,
+            cwd: '.',
+            src: ['bower_components/patternfly/dist/fonts/PatternFlyIcons-webfont.ttf'],
             dest: '<%= projectSettings.dist %>'
           },
           {
@@ -403,8 +409,6 @@ module.exports = function (grunt) {
       'angularFileLoader',
       'copy:html',
       'copy:js',
-      'copy:fonts',
-      'copy:fontawesome',
       'copy:img',
       'copy:styles',
       'copy:bower',
