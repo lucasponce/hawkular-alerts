@@ -97,7 +97,7 @@
             </goals>
             <phase>prepare-package</phase>
             <configuration>
-              <arguments>build --dist-dir=../classes/webroot</arguments>
+              <arguments>build --dist-dir=../classes/webroot --target-prefix=ui</arguments>
             </configuration>
           </execution>
         </executions>

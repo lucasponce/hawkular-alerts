@@ -1,6 +1,7 @@
 module.exports = function (grunt) {
   'use strict';
   var distDir = grunt.option('dist-dir') || 'dist';
+  var targetPrefix = grunt.option('target-prefix') || '';
 
   // Load grunt tasks automatically
   require( 'load-grunt-tasks' )( grunt );
@@ -377,10 +378,24 @@ module.exports = function (grunt) {
         'Gruntfile.js',
         'src/**/*.js'
       ]
+    },
+    replace: {
+      index: {
+        src: ['<%= projectSettings.dist %>/index.html'],
+        overwrite: true,
+        replacements: [{
+          from: 'href="',
+          to: 'href="' + targetPrefix + '/'
+        }, {
+          from: 'src="',
+          to: 'src="' + targetPrefix + '/'
+        }]
+      }
     }
   } );
 
   grunt.loadNpmTasks('grunt-contrib-compass');
+  grunt.loadNpmTasks('grunt-text-replace');
 
   grunt.registerTask( 'jshintRun', [
     'jshint'
@@ -414,6 +429,10 @@ module.exports = function (grunt) {
       'copy:bower',
       'copy:templates'
     ];
+
+    if (targetPrefix.length > 0) {
+      buildTasks.push('replace:index');
+    }
 
     grunt.task.run( buildTasks );
 
