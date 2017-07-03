@@ -417,7 +417,9 @@ module.exports = function (grunt) {
 
     var buildTasks = [
       'clean:dist',
-      'compass',
+    ];
+
+    var mainBuildTasks = [
       'lint',
       'ngtemplates',
       'copy:indexHtml',
@@ -429,6 +431,12 @@ module.exports = function (grunt) {
       'copy:bower',
       'copy:templates'
     ];
+
+    if (targetPrefix.length === 0) {
+      buildTasks.push('compass');
+    }
+
+    buildTasks = buildTasks.concat(mainBuildTasks);
 
     if (targetPrefix.length > 0) {
       buildTasks.push('replace:index');
