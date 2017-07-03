@@ -35,7 +35,7 @@ All content hosted under the `webroot` folder will be served by a Handler under 
 
 == Working on UI
 
-To develop in the UI Application you will need NodeJS tools.
+To develop in the UI Application you will need NodeJS tools (optionally Ruby runtime for sass and compass tools).
 
 A standard strategy could be to work locally on your
 
@@ -46,6 +46,8 @@ A standard strategy could be to work locally on your
 directory and prepare the dependencies you need to run all the UI elements
 
 ```
+    cd hawkular-alerts/ui/src/main/ui
+
     npm install
     sudo npm install -g bower
     bower install
