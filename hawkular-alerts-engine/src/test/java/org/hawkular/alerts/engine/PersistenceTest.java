@@ -2990,7 +2990,7 @@ public abstract class PersistenceTest {
         log.infof("Time for perf030GetAlerts = %s ms", time);
         assertTrue(time > 0);
         // This test averages around 4000ms on my box, so hopefully this is a reasonable fail time
-        assertTrue(time < 6000);
+        assertTrue(time < 10000);
     }
 
     private long perfGetEvents(int numEvents, int numGets, EventsCriteria criteria, int expected) throws Exception {
