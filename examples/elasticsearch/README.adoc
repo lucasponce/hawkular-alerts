@@ -9,33 +9,9 @@ Those are pretty simple and can be translated a different environment easily.
 
 == Install Elasticsearch and Hawkular Alerting
 
-=== A) Using Docker
+=== A) Manual Installation
 
-This tutorial can be followed as docker container.
-
-That can be done by the following commands:
-
-[source,shell,subs="+attributes"]
-----
-# Build docker image
-docker build -t hawkular-alerts-elasticsearch .
-docker run -i -t  hawkular-alerts-elasticsearch /bin/bash
-
-# Run Hawkular, Elasticsearch and Kibana
-nohup /opt/hawkular-alerts/dist/target/hawkular*/hawkular.sh
-nohup /opt/elasticsearch/bin/elasticsearch -Des.insecure.allow.root=true > elastic-search.out
-nohup /opt/kibana/bin/kibana > kibana.out
-
-# Run the example: Create the definitions
-/opt/create-definitions.sh
-
-# Run the example: Create random log
-/opt/create-logs.sh
-----
-
-=== B) Manual Installation (Optional)
-
-==== B.1) Install Elasticsearch
+==== A.1) Install Elasticsearch
 
 Download and install Elasticsearch and Kibana
 
@@ -70,7 +46,7 @@ Open a new shell and run Kibana on localhost
 Elasticsearch 2.4.4 and Kibana 4.6.4 versions are used in OpenShift 3.6 as logging system. +
 Hawkular Alerting is compatible with versions up to 5.2 versions.
 
-==== B.2) Install Hawkular Alerting
+==== A.2) Install Hawkular Alerting
 
 Build a Hawkular Alerting standalone distribution
 
@@ -109,7 +85,7 @@ A GUI SMTP server can be set up with these steps:
 ----
 ==================
 
-==== B.3) Run the example: Create Trigger definitions
+==== A.3) Run the example: Create Trigger definitions
 
 Run the definitions script
 
@@ -118,7 +94,7 @@ Run the definitions script
     ./create-definitions.sh
 ----
 
-==== B.4) Run the example: Create random documents on Elasticsearch
+==== A.4) Run the example: Create random documents on Elasticsearch
 
 Run the log script
 
@@ -126,6 +102,42 @@ Run the log script
 ----
     ./create-logs.sh
 ----
+
+=== B) Using Docker (Optional alternative)
+
+This tutorial can be followed as docker container.
+
+That can be done by the following commands:
+
+[source,shell,subs="+attributes"]
+----
+# Build docker image
+docker build -t hawkular-alerts-elasticsearch .
+docker run -i -t  hawkular-alerts-elasticsearch /bin/bash
+
+# Run Hawkular, Elasticsearch and Kibana
+nohup /opt/hawkular-alerts/dist/target/hawkular*/hawkular.sh
+nohup /opt/elasticsearch/bin/elasticsearch -Des.insecure.allow.root=true > elastic-search.out
+nohup /opt/kibana/bin/kibana > kibana.out
+
+# Run the example: Create the definitions
+/opt/create-definitions.sh
+
+# Run the example: Create random log
+/opt/create-logs.sh
+----
+
+== Visualize Alerts on Hawkular and Kibana
+
+Access to the link:http://localhost:5601/[Kibana Console] and add the indexes to visualize logs and alerts generated.
+
+----
+log
+alerts_summary
+alerts_full
+----
+
+Access to the link:http://localhost:8080/hawkular/alerts/ui[Hawkular Alerting Console] to get details of the Alerts and Triggers.
 
 == Understanding the example
 

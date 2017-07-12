@@ -18,30 +18,16 @@
 # @author Guilherme Baufaker Rêgo (@gbaufake)
 # Docker Container for Tutorial on Hawkular Alerts with Elasticsearch
 
-FROM fedora
+FROM jboss/base-jdk:8
 
 MAINTAINER Hawkular Alerting <hawkular-dev@lists.jboss.org>
 
-RUN dnf -y install wget git
+USER root
+RUN chmod -R 777 /opt
+
+RUN yum -y install wget git maven unzip
 
 EXPOSE 5601 8080 9200
-
-
-### Java Version
-
-ENV JAVA_VERSION 8u111
-ENV BUILD_VERSION b14
-
-# Downloading Java and Installing Java
-RUN wget --no-cookies --no-check-certificate --header "Cookie: oraclelicense=accept-securebackup-cookie" "http://download.oracle.com/otn-pub/java/jdk/$JAVA_VERSION-$BUILD_VERSION/jdk-$JAVA_VERSION-linux-x64.rpm" -O /tmp/jdk-8-linux-x64.rpm
-RUN yum -y install /tmp/jdk-8-linux-x64.rpm
-
-RUN alternatives --install /usr/bin/java jar /usr/java/latest/bin/java 200000
-RUN alternatives --install /usr/bin/javaws javaws /usr/java/latest/bin/javaws 200000
-RUN alternatives --install /usr/bin/javac javac /usr/java/latest/bin/javac 200000
-ENV JAVA_HOME /usr/java/latest
-
-Run dnf -y install maven unzip
 
 # Install Elastic Search
 RUN wget https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/zip/elasticsearch/2.4.4/elasticsearch-2.4.4.zip
