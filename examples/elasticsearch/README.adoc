@@ -7,7 +7,7 @@ The scripts used for this example are written in *bash* and tested on Linux plat
 Those are pretty simple and can be translated a different environment easily.
 ====
 
-== Step 0: Install Elasticsearch and Hawkular Alerting
+== Install Elasticsearch and Hawkular Alerting
 
 === A) Using Docker
 
@@ -109,7 +109,7 @@ A GUI SMTP server can be set up with these steps:
 ----
 ==================
 
-== Step 1: Create Trigger definitions
+==== B.3) Run the example: Create Trigger definitions
 
 Run the definitions script
 
@@ -117,6 +117,17 @@ Run the definitions script
 ----
     ./create-definitions.sh
 ----
+
+==== B.4) Run the example: Create random documents on Elasticsearch
+
+Run the log script
+
+[source,shell]
+----
+    ./create-logs.sh
+----
+
+== Understanding the example
 
 This scripts defines two triggers and three actions:
 
@@ -294,15 +305,3 @@ conditions, evaluations). In a second we are going to show how to map the Hawkul
             }"
       }
 ----
-
-
-
-== Step 2: Create Logs Documents
-
-Run the log script
-
-[source,shell]
-----
-    ./create-logs.sh
-----
-
