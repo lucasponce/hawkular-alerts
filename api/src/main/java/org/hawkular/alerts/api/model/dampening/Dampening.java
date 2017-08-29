@@ -127,7 +127,7 @@ public class Dampening implements Serializable {
             allowableValues = "> 0")
     private long evalTimeSetting;
 
-    @DocModelProperty(description = "A composed key for the dampening. This is a read-only description defined by the system.",
+    @DocModelProperty(description = "A composed key for the dampening. This is a read-only value defined by the system.",
             position = 7,
             required = false)
     @JsonInclude

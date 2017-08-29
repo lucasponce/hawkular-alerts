@@ -85,7 +85,7 @@ public abstract class Condition implements Serializable {
      * Number of conditions associated with a particular trigger.
      * i.e. 2 [ conditions ]
      */
-    @DocModelProperty(description = "Number of conditions associated with a particular trigger. This is a read-only description " +
+    @DocModelProperty(description = "Number of conditions associated with a particular trigger. This is a read-only value " +
             "defined by the system.",
             position = 4)
     @JsonInclude
@@ -95,7 +95,7 @@ public abstract class Condition implements Serializable {
      * Index of the current condition
      * i.e. 1 [ of 2 conditions ]
      */
-    @DocModelProperty(description = "Index of the current condition. This is a read-only description defined by the system.",
+    @DocModelProperty(description = "Index of the current condition. This is a read-only value defined by the system.",
             position = 5)
     @JsonInclude
     protected int conditionSetIndex;
@@ -103,7 +103,7 @@ public abstract class Condition implements Serializable {
     /**
      * A composed key for the condition
      */
-    @DocModelProperty(description = "A composed key for the condition. This is a read-only description defined by the system.",
+    @DocModelProperty(description = "A composed key for the condition. This is a read-only value defined by the system.",
             position = 6)
     @JsonInclude
     protected String conditionId;

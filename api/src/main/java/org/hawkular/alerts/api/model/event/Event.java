@@ -144,7 +144,7 @@ public class Event implements Comparable<Event>, Serializable {
     @DocModelProperty(description = "Tags defined by the user for this event. + \n " +
             "Events generated from <<Trigger>> will use Trigger.tags. + \n" +
             "Tags can be used as part of Event conditions expressions and criteria in finder methods. + \n" +
-            "Tag description cannot be null.",
+            "Tag value cannot be null.",
             position = 9)
     @JsonInclude(Include.NON_EMPTY)
     protected Map<String, String> tags;

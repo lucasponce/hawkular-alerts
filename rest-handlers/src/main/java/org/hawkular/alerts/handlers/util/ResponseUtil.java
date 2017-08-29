@@ -57,7 +57,7 @@ public class ResponseUtil {
     @DocModel(description = "Payload for a REST error response.")
     public static class ApiError {
 
-        @DocModelProperty(description = "Description of the error message.")
+        @DocModelProperty(description = "The error message.")
         @JsonInclude
         private final String errorMsg;
 
