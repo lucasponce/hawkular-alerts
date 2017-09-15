@@ -32,12 +32,12 @@ public class ServiceNames {
     public static String HAWKULAR_ALERTER_ENV = "hawkular-alerts.alerter-deployment";
     public static String STANDALONE = "standalone";
 
-    private static String JNDI_ALERTS_STANDALONE = "java:global/hawkular-alerts/CassAlertsServiceImpl";
-    private static String JNDI_DEFINITIONS_STANDALONE = "java:global/hawkular-alerts/CassDefinitionsServiceImpl";
+    private static String JNDI_ALERTS_STANDALONE = "java:global/hawkular-alerts/IspnAlertsServiceImpl";
+    private static String JNDI_DEFINITIONS_STANDALONE = "java:global/hawkular-alerts/IspnDefinitionsServiceImpl";
     private static String JNDI_PROPERTIES_STANDALONE = "java:global/hawkular-alerts/PropertiesServiceImpl";
 
-    private static String JNDI_ALERTS_METRICS = "java:global/hawkular-metrics/hawkular-alerts/CassAlertsServiceImpl";
-    private static String JNDI_DEFINITIONS_METRICS = "java:global/hawkular-metrics/hawkular-alerts/CassDefinitionsServiceImpl";
+    private static String JNDI_ALERTS_METRICS = "java:global/hawkular-metrics/hawkular-alerts/IspnAlertsServiceImpl";
+    private static String JNDI_DEFINITIONS_METRICS = "java:global/hawkular-metrics/hawkular-alerts/IspnDefinitionsServiceImpl";
     private static String JNDI_PROPERTIES_METRICS = "java:global/hawkular-metrics/hawkular-alerts/PropertiesServiceImpl";
 
     public enum Service {

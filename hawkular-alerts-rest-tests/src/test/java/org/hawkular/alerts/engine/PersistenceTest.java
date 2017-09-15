@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.hawkular.alerts.api.exception.NotFoundException;
 import org.hawkular.alerts.api.model.Severity;
 import org.hawkular.alerts.api.model.action.Action;
 import org.hawkular.alerts.api.model.condition.AvailabilityCondition;
@@ -67,7 +68,8 @@ import org.hawkular.alerts.api.services.AlertsService;
 import org.hawkular.alerts.api.services.DefinitionsService;
 import org.hawkular.alerts.api.services.EventsCriteria;
 import org.hawkular.alerts.api.services.TriggersCriteria;
-import org.jboss.logging.Logger;
+import org.hawkular.commons.log.MsgLogger;
+import org.hawkular.commons.log.MsgLogging;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
 import org.junit.Rule;
@@ -83,7 +85,7 @@ import org.junit.runners.MethodSorters;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public abstract class PersistenceTest {
 
-    private static final Logger log = Logger.getLogger(PersistenceTest.class);
+    private static final MsgLogger log = MsgLogging.getMsgLogger(PersistenceTest.class);
 
     /*
         TenantId = 28026b36-8fe4-4332-84c8-524e173a68bf
@@ -277,12 +279,24 @@ public abstract class PersistenceTest {
 
         definitionsService.removeGroupTrigger(TENANT, "group-trigger", false, false);
 
-        t = definitionsService.getTrigger(TENANT, "group-trigger");
-        assertNull(t);
-        t = definitionsService.getTrigger(TENANT, "member-1-trigger");
-        assertNull(t);
-        t = definitionsService.getTrigger(TENANT, "member-2-trigger");
-        assertNull(t);
+        try {
+            t = definitionsService.getTrigger(TENANT, "group-trigger");
+            assertNull(t);
+        } catch (NotFoundException e) {
+            // Expected for Ispn backend
+        }
+        try {
+            t = definitionsService.getTrigger(TENANT, "member-1-trigger");
+            assertNull(t);
+        } catch (NotFoundException e) {
+            // Expected for Ispn backend
+        }
+        try {
+            t = definitionsService.getTrigger(TENANT, "member-2-trigger");
+            assertNull(t);
+        } catch (NotFoundException e) {
+            // Expected for Ispn backend
+        }
     }
 
     private Trigger copyTrigger(Trigger t, String newTriggerId) throws Exception {
@@ -409,19 +423,42 @@ public abstract class PersistenceTest {
         assertTrue(nt2.toString(), !nt2.isEnabled());
 
         definitionsService.removeGroupTrigger(TENANT, "group-trigger", true, true);
-        t = definitionsService.getTrigger(TENANT, "group-trigger");
-        assertNull(t);
-        t = definitionsService.getTrigger(TENANT, "member-1-trigger");
-        assertNotNull(t);
-        t = definitionsService.getTrigger(TENANT, "member-2-trigger");
-        assertNotNull(t);
+        try {
+            t = definitionsService.getTrigger(TENANT, "group-trigger");
+            assertNull(t);
+        } catch (NotFoundException e) {
+            // Expected for Ispn backend
+        }
+        try {
+            t = definitionsService.getTrigger(TENANT, "member-1-trigger");
+            assertNotNull(t);
+        } catch (NotFoundException e) {
+            // Expected for Ispn backend
+        }
+        try {
+            t = definitionsService.getTrigger(TENANT, "member-2-trigger");
+            assertNotNull(t);
+        } catch (NotFoundException e) {
+            // Expected for Ispn backend
+        }
 
         definitionsService.removeTrigger(TENANT, "member-1-trigger");
-        t = definitionsService.getTrigger(TENANT, "member-1-trigger");
-        assertNull(t);
+
+        try {
+            t = definitionsService.getTrigger(TENANT, "member-1-trigger");
+            assertNull(t);
+        } catch (NotFoundException e) {
+            // Expected for Ispn backend
+        }
+
         definitionsService.removeTrigger(TENANT, "member-2-trigger");
-        t = definitionsService.getTrigger(TENANT, "member-2-trigger");
-        assertNull(t);
+
+        try {
+            t = definitionsService.getTrigger(TENANT, "member-2-trigger");
+            assertNull(t);
+        } catch (NotFoundException e) {
+            // Expected for Ispn backend
+        }
     }
 
     @Test
@@ -580,12 +617,26 @@ public abstract class PersistenceTest {
 
         definitionsService.removeGroupTrigger(TENANT, "group-trigger", false, false);
 
-        t = definitionsService.getTrigger(TENANT, "group-trigger");
-        assertNull(t);
-        t = definitionsService.getTrigger(TENANT, "member-1-trigger");
-        assertNull(t);
-        t = definitionsService.getTrigger(TENANT, "member-2-trigger");
-        assertNull(t);
+        try {
+            t = definitionsService.getTrigger(TENANT, "group-trigger");
+            assertNull(t);
+        } catch (NotFoundException e) {
+            // Expected for Ispn backend
+        }
+
+        try {
+            t = definitionsService.getTrigger(TENANT, "member-1-trigger");
+            assertNull(t);
+        } catch (NotFoundException e) {
+            // Expected for Ispn backend
+        }
+
+        try {
+            t = definitionsService.getTrigger(TENANT, "member-2-trigger");
+            assertNull(t);
+        } catch (NotFoundException e) {
+            // Expected for Ispn backend
+        }
     }
 
     @Test
@@ -674,12 +725,24 @@ public abstract class PersistenceTest {
 
         definitionsService.removeGroupTrigger(TENANT, "group-trigger", false, false);
 
-        t = definitionsService.getTrigger(TENANT, "group-trigger");
-        assertNull(t);
-        t = definitionsService.getTrigger(TENANT, "member-1-trigger");
-        assertNull(t);
-        t = definitionsService.getTrigger(TENANT, "member-2-trigger");
-        assertNull(t);
+        try {
+            t = definitionsService.getTrigger(TENANT, "group-trigger");
+            assertNull(t);
+        } catch (NotFoundException e) {
+            // Expected for Ispn backend
+        }
+        try {
+            t = definitionsService.getTrigger(TENANT, "member-1-trigger");
+            assertNull(t);
+        } catch (NotFoundException e) {
+            // Expected for Ispn backend
+        }
+        try {
+            t = definitionsService.getTrigger(TENANT, "member-2-trigger");
+            assertNull(t);
+        } catch (NotFoundException e) {
+            // Expected for Ispn backend
+        }
     }
 
     @Test
@@ -1880,7 +1943,7 @@ public abstract class PersistenceTest {
 
         log.info("Actions are asynchronous. Give them some time.");
 
-        int tries = 10;
+        int tries = 20;
         List<Action> actions = actionsService.getActions(TENANT, null, null);
         while (actions.size() != (103 * 4) && tries > 0) {
             actions = actionsService.getActions(TENANT, null, null);
@@ -2937,7 +3000,7 @@ public abstract class PersistenceTest {
 
         assertEquals(2, events.size());
 
-        String tagQuery = "test_tag = '/t;hawkular/f;my-agent/r;Local%20DMR~~_Server Availability'";
+        String tagQuery = "test_tag = '\\/t;hawkular\\/f;my-agent\\/r;Local%20DMR\\~\\~_Server Availability'";
 
         criteria.setCategory("test");
         criteria.setTagQuery(tagQuery);
@@ -2990,7 +3053,7 @@ public abstract class PersistenceTest {
         log.infof("Time for perf030GetAlerts = %s ms", time);
         assertTrue(time > 0);
         // This test averages around 4000ms on my box, so hopefully this is a reasonable fail time
-        assertTrue(time < 10000);
+        assertTrue(time < 6000);
     }
 
     private long perfGetEvents(int numEvents, int numGets, EventsCriteria criteria, int expected) throws Exception {
@@ -3031,7 +3094,9 @@ public abstract class PersistenceTest {
             Alert.Status status = Alert.Status.values()[i % Alert.Status.values().length];
             Alert a = new Alert(TENANT, t, null);
             a.setCtime(i);
-            a.setStatus(status);
+            if (status != Alert.Status.OPEN) {
+                a.addLifecycle(status, "test", i);
+            }
             alerts.add(a);
             if (i % 100 == 0) {
                 alertsService.addAlerts(alerts);
@@ -3040,7 +3105,7 @@ public abstract class PersistenceTest {
         }
         alertsService.addAlerts(alerts);
         long alertCreateTime = System.currentTimeMillis() - alertCreateStart;
-        log.warnf("Created %d Alerts in %d ms", numAlerts, alertCreateTime);
+        log.warnf("Created %s Alerts in %s ms", new Integer(numAlerts), new Long(alertCreateTime));
 
         Collection<Alert> result = null;
         long start = System.currentTimeMillis();
@@ -3057,6 +3122,14 @@ public abstract class PersistenceTest {
     @Test
     public void test0300GetAlertsMultipleTenants() throws Exception {
         Set<String> tenantIds = new HashSet<>(Arrays.asList("tenant4", "tenant2", "tenant1", "tenant3"));
+        AlertsCriteria criteria = new AlertsCriteria();
+        tenantIds.stream().forEach(tenantId -> {
+            try {
+                alertsService.deleteAlerts(tenantId, criteria);
+            } catch (Exception e) {
+                log.error(e);
+            }
+        });
         List<String> orderedTenantIds = Arrays.asList("tenant1", "tenant2", "tenant3", "tenant4");
 
         int numAlerts = 100;

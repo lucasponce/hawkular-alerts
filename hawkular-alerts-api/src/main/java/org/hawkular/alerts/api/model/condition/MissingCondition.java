@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Red Hat, Inc. and/or its affiliates
+ * Copyright 2015-2017 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,19 +16,18 @@
  */
 package org.hawkular.alerts.api.model.condition;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import org.hawkular.alerts.api.model.trigger.Mode;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-
 /**
  * A <code>MissingCondition</code> is used to evaluate when a data or an event has not been received on time interval.
  *
- * A MissingCondition will be evaluated to true when a data/event has not been received in the last interval time
- * starting to count from trigger was enabled or last received data/event.
+ * A MissingCondition will be evaluated to true when a data/event has not been received in the last interval time,
+ * in milliseconds, starting to count from trigger was enabled or last received data/event.
  *
  * @author Jay Shaughnessy
  * @author Lucas Ponce
@@ -37,7 +36,7 @@ import io.swagger.annotations.ApiModelProperty;
         "on time interval. + \n" +
         " + \n" +
         "A MissingCondition will be evaluated to true when a data/event has not been received in the " +
-        "last interval time starting to count from trigger was enabled or last received data/event.")
+        "last interval time, in milliseconds, starting to count from trigger was enabled or last received data/event.")
 public class MissingCondition extends Condition {
 
     private static final long serialVersionUID = 1L;
@@ -77,6 +76,14 @@ public class MissingCondition extends Condition {
                 conditionSetIndex, Type.MISSING);
         this.dataId = dataId;
         this.interval = interval;
+        updateDisplayString();
+    }
+
+    public MissingCondition(MissingCondition condition) {
+        super(condition);
+
+        this.dataId = condition.getDataId();
+        this.interval = condition.getInterval();
     }
 
     @Override
@@ -100,9 +107,10 @@ public class MissingCondition extends Condition {
         return (previousTime + interval) < time;
     }
 
-    public String getLog(long previousTime, long time) {
-        return triggerId + " : " +  dataId + " at " + time + ". Previous time: " + previousTime + " . Interval: "
-                + interval;
+    @Override
+    public void updateDisplayString() {
+        String s = String.format("%s missing GTE %dms", this.dataId, this.interval);
+        setDisplayString(s);
     }
 
     @Override

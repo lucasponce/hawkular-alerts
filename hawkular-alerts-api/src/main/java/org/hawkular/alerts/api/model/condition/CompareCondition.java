@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Red Hat, Inc. and/or its affiliates
+ * Copyright 2015-2017 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,13 +18,12 @@ package org.hawkular.alerts.api.model.condition;
 
 import static org.hawkular.alerts.api.model.trigger.Mode.FIRING;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import org.hawkular.alerts.api.model.trigger.Mode;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
 
 /**
  * A numeric comparison condition. Examples:
@@ -119,8 +118,19 @@ public class CompareCondition extends Condition {
         this.operator = operator;
         this.data2Id = data2Id;
         this.data2Multiplier = data2Multiplier;
+        updateDisplayString();
     }
 
+    public CompareCondition(CompareCondition condition) {
+        super(condition);
+
+        this.dataId = condition.getDataId();
+        this.data2Id = condition.getData2Id();
+        this.data2Multiplier = condition.getData2Multiplier();
+        this.operator = condition.getOperator();
+    }
+
+    @Override
     public String getDataId() {
         return dataId;
     }
@@ -153,12 +163,6 @@ public class CompareCondition extends Condition {
         this.operator = operator;
     }
 
-    public String getLog(double dataValue, double data2Value) {
-        Double val = data2Multiplier * data2Value;
-        return triggerId + " : " + dataValue + " " + operator.name() + " " +
-                val + " (" + data2Multiplier + "*" + data2Value + ")";
-    }
-
     public boolean match(double dataValue, double data2Value) {
         double threshold = (data2Multiplier * data2Value);
         switch (operator) {
@@ -173,6 +177,14 @@ public class CompareCondition extends Condition {
             default:
                 throw new IllegalStateException("Unknown operator: " + operator.name());
         }
+    }
+
+    @Override
+    public void updateDisplayString() {
+        String operator = null == this.operator ? null : this.operator.name();
+        Double data2Multiplier = (null == this.data2Multiplier) ? 0.0 : this.data2Multiplier;
+        String s = String.format("%s %s %.2f%% %s", this.dataId, operator, (100 * data2Multiplier), this.data2Id);
+        setDisplayString(s);
     }
 
     @Override

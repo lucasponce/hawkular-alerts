@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Red Hat, Inc. and/or its affiliates
+ * Copyright 2015-2017 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,14 +18,13 @@ package org.hawkular.alerts.api.model.condition;
 
 import static org.hawkular.alerts.api.model.trigger.Mode.FIRING;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import org.hawkular.alerts.api.model.data.AvailabilityType;
 import org.hawkular.alerts.api.model.trigger.Mode;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
 
 /**
  * An availability condition definition.
@@ -97,8 +96,17 @@ public class AvailabilityCondition extends Condition {
         super(tenantId, triggerId, triggerMode, conditionSetSize, conditionSetIndex, Type.AVAILABILITY);
         this.dataId = dataId;
         this.operator = operator;
+        updateDisplayString();
     }
 
+    public AvailabilityCondition(AvailabilityCondition condition) {
+        super(condition);
+
+        this.dataId = condition.getDataId();
+        this.operator = condition.getOperator();
+    }
+
+    @Override
     public String getDataId() {
         return dataId;
     }
@@ -115,10 +123,6 @@ public class AvailabilityCondition extends Condition {
         this.operator = operator;
     }
 
-    public String getLog(AvailabilityType value) {
-        return triggerId + " : " + value + " " + operator.name();
-    }
-
     public boolean match(AvailabilityType value) {
         switch (operator) {
             case DOWN:
@@ -130,6 +134,13 @@ public class AvailabilityCondition extends Condition {
             default:
                 throw new IllegalStateException("Unknown operator: " + operator.name());
         }
+    }
+
+    @Override
+    public void updateDisplayString() {
+        String operator = null == this.operator ? null : this.getOperator().name();
+        String s = String.format("%s is %s", this.dataId, operator);
+        setDisplayString(s);
     }
 
     @Override
@@ -161,7 +172,7 @@ public class AvailabilityCondition extends Condition {
 
     @Override
     public String toString() {
-        return "AvailabilityCondition [triggerId='" + triggerId + "', " +
+        return "AvailabilityCondition [tenantId='" + tenantId + "', triggerId='" + triggerId + "', " +
                 "triggerMode=" + triggerMode + ", " +
                 "dataId=" + (dataId == null ? null : '\'' + dataId + '\'') + ", " +
                 "operator=" + (operator == null ? null : '\'' + operator.toString() + '\'') + "]";

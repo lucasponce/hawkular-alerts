@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Red Hat, Inc. and/or its affiliates
+ * Copyright 2015-2017 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,15 +18,14 @@ package org.hawkular.alerts.api.model.condition;
 
 import java.util.List;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import org.hawkular.alerts.api.model.condition.Condition.Type;
 import org.hawkular.alerts.api.model.condition.NelsonCondition.NelsonRule;
 import org.hawkular.alerts.api.model.data.Data;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
 
 /**
  * An evaluation state for nelson condition.
@@ -137,8 +136,11 @@ public class NelsonConditionEval extends ConditionEval {
     }
 
     @Override
-    public String getLog() {
-        return condition.getLog(violations, mean, standardDeviation, violationsData);
+    public void updateDisplayString() {
+        String s = String.format(
+                "Nelson: %s violations=%s mean=%.2f, standardDeviation=%.2f, sampleSize=%d, violationsData=%s",
+                condition.getDataId(), violations, mean, standardDeviation, condition.getSampleSize(), violationsData);
+        setDisplayString(s);
     }
 
     @Override

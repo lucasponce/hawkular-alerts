@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Red Hat, Inc. and/or its affiliates
+ * Copyright 2015-2017 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,13 +18,12 @@ package org.hawkular.alerts.api.model.condition;
 
 import java.util.HashMap;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import org.hawkular.alerts.api.model.condition.Condition.Type;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
 
 /**
  * An evaluation state for MissingCondition
@@ -89,8 +88,10 @@ public class MissingConditionEval extends ConditionEval {
     }
 
     @Override
-    public String getLog() {
-        return condition.getLog(previousTime, time);
+    public void updateDisplayString() {
+        String s = String.format("Missing: %s[%tc] %dms GTE %dms", condition.getDataId(), time,
+                (time - previousTime), condition.getInterval());
+        setDisplayString(s);
     }
 
     public MissingCondition getCondition() {

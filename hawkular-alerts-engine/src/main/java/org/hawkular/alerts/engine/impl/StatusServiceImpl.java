@@ -28,8 +28,6 @@ import javax.inject.Inject;
 import org.hawkular.alerts.api.services.StatusService;
 import org.hawkular.alerts.engine.service.PartitionManager;
 
-import com.datastax.driver.core.Session;
-
 /**
  * An implementation of {@link org.hawkular.alerts.api.services.StatusService}.
  *
@@ -44,13 +42,9 @@ public class StatusServiceImpl implements StatusService {
     @EJB
     PartitionManager partitionManager;
 
-    @Inject
-    @CassClusterSession
-    Session session;
-
     @Override
     public boolean isStarted() {
-        return session != null && !session.isClosed();
+        return true;
     }
 
     @Override

@@ -27,7 +27,7 @@ import java.util.Map;
 public interface StatusService {
 
     /**
-     * @return true if system has initialized Cassandra backend correctly
+     * @return true if system has initialized backend correctly
      *         false otherwise
      */
     boolean isStarted();

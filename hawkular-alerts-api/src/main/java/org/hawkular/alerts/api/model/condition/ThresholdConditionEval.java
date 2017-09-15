@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Red Hat, Inc. and/or its affiliates
+ * Copyright 2015-2017 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,14 +16,13 @@
  */
 package org.hawkular.alerts.api.model.condition;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import org.hawkular.alerts.api.model.condition.Condition.Type;
 import org.hawkular.alerts.api.model.data.Data;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
 
 /**
  * An evaluation state for threshold condition.
@@ -36,13 +35,11 @@ public class ThresholdConditionEval extends ConditionEval {
 
     private static final long serialVersionUID = 1L;
 
-    @ApiModelProperty(value = "Threshold condition linked with this state.",
-            position = 0)
+    @ApiModelProperty(value = "Threshold condition linked with this state.", position = 0)
     @JsonInclude(Include.NON_NULL)
     private ThresholdCondition condition;
 
-    @ApiModelProperty(value = "Numeric value for dataId used in the evaluation.",
-            position = 1)
+    @ApiModelProperty(value = "Numeric value for dataId used in the evaluation.", position = 1)
     @JsonInclude(Include.NON_NULL)
     private Double value;
 
@@ -52,7 +49,8 @@ public class ThresholdConditionEval extends ConditionEval {
     }
 
     public ThresholdConditionEval(ThresholdCondition condition, Data data) {
-        super(Type.THRESHOLD, condition.match(Double.valueOf(data.getValue())), data.getTimestamp(), data.getContext());
+        super(Type.THRESHOLD, condition.match(Double.valueOf(data.getValue())), data.getTimestamp(),
+                data.getContext());
         this.condition = condition;
         this.value = Double.valueOf(data.getValue());
     }
@@ -94,8 +92,10 @@ public class ThresholdConditionEval extends ConditionEval {
     }
 
     @Override
-    public String getLog() {
-        return condition.getLog(value) + ", evalTimestamp=" + evalTimestamp + ", dataTimestamp=" + dataTimestamp;
+    public void updateDisplayString() {
+        String s = String.format("Threshold: %s[%.2f] %s %.2f", condition.getDataId(), value,
+                condition.getOperator().name(), condition.getThreshold());
+        setDisplayString(s);
     }
 
     @Override

@@ -85,8 +85,8 @@
     <version.org.drools>6.4.0.Final</version.org.drools>
     <version.org.elasticsearch.client>5.2.2</version.org.elasticsearch.client>
     <version.org.freemarker>2.3.23</version.org.freemarker>
-    <version.org.hawkular.commons>0.9.6.Final</version.org.hawkular.commons>
-    <version.org.infinispan.wildfly>8.0.1.Final</version.org.infinispan.wildfly>
+    <version.org.hawkular.commons>0.9.7.Final</version.org.hawkular.commons>
+    <version.org.infinispan.wildfly>9.0.0.Final</version.org.infinispan.wildfly>
     <version.org.infinispan.eap64>5.2.9.Final</version.org.infinispan.eap64>
     <version.org.jboss.jboss-vfs>3.2.10.Final</version.org.jboss.jboss-vfs>
     <version.org.schwering>2.0.0.Alpha3</version.org.schwering>
@@ -133,6 +133,7 @@
       </activation>
       <modules>
         <module>hawkular-alerts-api</module>
+        <module>hawkular-alerts-commons</module>
         <module>hawkular-alerts-filter-api</module>
         <module>hawkular-alerts-engine</module>
         <module>hawkular-alerts-engine-extensions</module>
@@ -159,6 +160,7 @@
       </properties>
       <modules>
         <module>hawkular-alerts-api</module>
+        <module>hawkular-alerts-commons</module>
         <module>hawkular-alerts-filter-api</module>
         <module>hawkular-alerts-engine</module>
         <module>hawkular-alerts-engine-extensions</module>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Red Hat, Inc. and/or its affiliates
+ * Copyright 2015-2017 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,15 +16,14 @@
  */
 package org.hawkular.alerts.api.model.condition;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import org.hawkular.alerts.api.model.condition.Condition.Type;
 import org.hawkular.alerts.api.model.data.Data;
 import org.hawkular.alerts.api.model.event.Event;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
 
 /**
  * An evaluation state for an external condition.  Note that external conditions may report a <code>Data</code> value
@@ -118,14 +117,10 @@ public class ExternalConditionEval extends ConditionEval {
     }
 
     @Override
-    public String getLog() {
-        if (value != null) {
-            return condition.getLog(value) + ", evalTimestamp=" + evalTimestamp +
-                    ", dataTimestamp=" + dataTimestamp;
-        } else {
-            return condition.getLog(event) + ", evalTimestamp=" + evalTimestamp +
-                    ", dataTimestamp=" + dataTimestamp;
-        }
+    public void updateDisplayString() {
+        String s = String.format("External[%s]: %s[%s] matches [%s]", condition.getAlerterId(),
+                condition.getDataId(), (value != null ? value : event.toString()), condition.getExpression());
+        setDisplayString(s);
     }
 
     @Override

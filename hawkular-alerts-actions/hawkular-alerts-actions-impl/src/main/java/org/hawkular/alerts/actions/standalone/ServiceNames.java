@@ -33,10 +33,10 @@ public class ServiceNames {
     public static String HAWKULAR_ALERTS_ACTIONS_ENV = "hawkular-alerts.plugins-deployment";
     public static String STANDALONE = "standalone";
 
-    private static String JNDI_ACTIONS_METRICS = "java:global/hawkular-metrics/hawkular-alerts/CassActionsServiceImpl";
-    private static String JNDI_ACTIONS_STANDALONE = "java:global/hawkular-alerts/CassActionsServiceImpl";
-    private static String JNDI_DEFINITIONS_METRICS = "java:global/hawkular-metrics/hawkular-alerts/CassDefinitionsServiceImpl";
-    private static String JNDI_DEFINITIONS_STANDALONE = "java:global/hawkular-alerts/CassDefinitionsServiceImpl";
+    private static String JNDI_ACTIONS_METRICS = "java:global/hawkular-metrics/hawkular-alerts/IspnActionsServiceImpl";
+    private static String JNDI_ACTIONS_STANDALONE = "java:global/hawkular-alerts/IspnActionsServiceImpl";
+    private static String JNDI_DEFINITIONS_METRICS = "java:global/hawkular-metrics/hawkular-alerts/IspnDefinitionsServiceImpl";
+    private static String JNDI_DEFINITIONS_STANDALONE = "java:global/hawkular-alerts/IspnDefinitionsServiceImpl";
 
     public enum Service {
         ACTIONS_SERVICE, DEFINITIONS_SERVICE

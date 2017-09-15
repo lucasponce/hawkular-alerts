@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Red Hat, Inc. and/or its affiliates
+ * Copyright 2015-2017 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,11 +14,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.hawkular.alerts.engine.impl;
+package org.hawkular.alerts.api.exception;
 
 /**
+ * Indicates in an insert operation that the element to add exists on backend.
+ *
  * @author Jay Shaughnessy
  * @author Lucas Ponce
  */
-public @interface CassClusterSession {
+public class FoundException extends RuntimeException {
+    private static final long serialVersionUID = 1L;
+
+    public FoundException(){
+    }
+
+    public FoundException(String message) {
+        super(message);
+    }
 }

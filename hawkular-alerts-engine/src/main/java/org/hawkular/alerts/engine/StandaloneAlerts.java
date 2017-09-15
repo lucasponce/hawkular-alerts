@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Red Hat, Inc. and/or its affiliates
+ * Copyright 2015-2017 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,31 +16,38 @@
  */
 package org.hawkular.alerts.engine;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import javax.enterprise.concurrent.ManagedExecutorService;
+import java.util.concurrent.ThreadFactory;
 
 import org.hawkular.alerts.api.services.ActionsService;
 import org.hawkular.alerts.api.services.AlertsService;
 import org.hawkular.alerts.api.services.DefinitionsService;
+import org.hawkular.alerts.api.services.StatusService;
+import org.hawkular.alerts.cache.IspnCacheManager;
+import org.hawkular.alerts.engine.cache.ActionsCacheManager;
+import org.hawkular.alerts.engine.cache.PublishCacheManager;
 import org.hawkular.alerts.engine.impl.AlertsContext;
 import org.hawkular.alerts.engine.impl.AlertsEngineImpl;
-import org.hawkular.alerts.engine.impl.CassActionsServiceImpl;
-import org.hawkular.alerts.engine.impl.CassAlertsServiceImpl;
-import org.hawkular.alerts.engine.impl.CassDefinitionsServiceImpl;
+import org.hawkular.alerts.engine.impl.DataDrivenGroupCacheManager;
 import org.hawkular.alerts.engine.impl.DroolsRulesEngineImpl;
+import org.hawkular.alerts.engine.impl.ExtensionsServiceImpl;
+import org.hawkular.alerts.engine.impl.IncomingDataManagerImpl;
+import org.hawkular.alerts.engine.impl.PartitionManagerImpl;
 import org.hawkular.alerts.engine.impl.PropertiesServiceImpl;
-import org.jboss.logging.Logger;
-
-import com.datastax.driver.core.Session;
+import org.hawkular.alerts.engine.impl.StatusServiceImpl;
+import org.hawkular.alerts.engine.impl.ispn.IspnActionsServiceImpl;
+import org.hawkular.alerts.engine.impl.ispn.IspnAlertsServiceImpl;
+import org.hawkular.alerts.engine.impl.ispn.IspnDefinitionsServiceImpl;
+import org.hawkular.alerts.extensions.CepEngineImpl;
+import org.hawkular.alerts.extensions.EventsAggregationExtension;
+import org.hawkular.alerts.filter.CacheClient;
+import org.hawkular.commons.log.MsgLogger;
+import org.hawkular.commons.log.MsgLogging;
+import org.hawkular.commons.properties.HawkularProperties;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.query.Search;
+import org.infinispan.query.SearchManager;
 
 /**
  * Factory helper for standalone use cases.
@@ -48,157 +55,213 @@ import com.datastax.driver.core.Session;
  * @author Lucas Ponce
  */
 public class StandaloneAlerts {
-    private static final int INIT_TIME_COUNT = 10;
-    private static final int INIT_TIME_SLEEP = 500;
+    private static final MsgLogger log = MsgLogging.getMsgLogger(StandaloneAlerts.class);
+    private static final String ISPN_BACKEND_REINDEX = "hawkular-alerts.backend-reindex";
+    private static final String ISPN_BACKEND_REINDEX_DEFAULT = "false";
+    private static StandaloneAlerts instance;
+    private static ExecutorService executor;
+    private static boolean cass;
+    private static boolean ispnReindex;
 
-    private final Logger log = Logger.getLogger(StandaloneAlerts.class);
+    private boolean distributed;
 
-    private static StandaloneAlerts instance = null;
+    private AlertsThreadFactory threadFactory;
 
-    private PropertiesServiceImpl propertiesService = null;
-    private AlertsContext alertsContext = null;
-    private CassActionsServiceImpl actions = null;
-    private CassAlertsServiceImpl alerts = null;
-    private CassDefinitionsServiceImpl definitions = null;
-    private AlertsEngineImpl engine = null;
-    private DroolsRulesEngineImpl rules = null;
-    private StandaloneExecutorService executor = new StandaloneExecutorService();
+    private ActionsCacheManager actionsCacheManager;
+    private AlertsContext alertsContext;
+    private AlertsEngineImpl engine;
+    private CacheClient dataIdCache;
+    private CepEngineImpl cepEngineImpl;
+    private DataDrivenGroupCacheManager dataDrivenGroupCacheManager;
+    private DroolsRulesEngineImpl rules;
+    private EmbeddedCacheManager cacheManager;
+    private EventsAggregationExtension eventsAggregationExtension;
+    private ExtensionsServiceImpl extensions;
+    private IncomingDataManagerImpl incoming;
+    private IspnActionsServiceImpl ispnActions;
+    private IspnAlertsServiceImpl ispnAlerts;
+    private IspnDefinitionsServiceImpl ispnDefinitions;
+    private StatusServiceImpl status;
+    private PartitionManagerImpl partitionManager;
+    private PropertiesServiceImpl properties;
+    private PublishCacheManager publishCacheManager;
 
-    private StandaloneAlerts(Session session) {
-        actions = new CassActionsServiceImpl();
+    private StandaloneAlerts() {
+        distributed = IspnCacheManager.isDistributed();
+        cacheManager = IspnCacheManager.getCacheManager();
+
+        threadFactory = new AlertsThreadFactory();
+        if (executor == null) {
+            executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), threadFactory);
+        }
+
+        dataIdCache = new CacheClient();
         rules = new DroolsRulesEngineImpl();
         engine = new AlertsEngineImpl();
-        definitions = new CassDefinitionsServiceImpl();
-        propertiesService = new PropertiesServiceImpl();
-        alerts = new CassAlertsServiceImpl();
-        alerts.setSession(session);
-        alerts.setExecutor(executor);
-        alerts.setProperties(propertiesService);
-        alerts.init();
+        properties = new PropertiesServiceImpl();
         alertsContext = new AlertsContext();
+        partitionManager = new PartitionManagerImpl();
+        status = new StatusServiceImpl();
+        extensions = new ExtensionsServiceImpl();
+        dataDrivenGroupCacheManager = new DataDrivenGroupCacheManager();
+        incoming = new IncomingDataManagerImpl();
+        actionsCacheManager = new ActionsCacheManager();
+        publishCacheManager = new PublishCacheManager();
+        cepEngineImpl = new CepEngineImpl();
+        eventsAggregationExtension = new EventsAggregationExtension();
 
-        definitions.setSession(session);
-        definitions.setAlertsEngine(engine);
-        definitions.setAlertsContext(alertsContext);
-        definitions.setProperties(propertiesService);
-        definitions.init();
+        log.info("Hawkular Alerting uses Infinispan backend");
+        ispnReindex = HawkularProperties.getProperty(ISPN_BACKEND_REINDEX, ISPN_BACKEND_REINDEX_DEFAULT)
+                .equals("true");
 
-        actions.setSession(session);
-        actions.setAlertsContext(alertsContext);
-        actions.setDefinitions(definitions);
-        actions.setExecutor(executor);
+        if (ispnReindex) {
+            log.info("Hawkular Alerting started with hawkular-alerts.backend-reindex=true");
+            log.info("Reindexing Ispn [backend] started.");
+            long startReindex = System.currentTimeMillis();
+            SearchManager searchManager = Search
+                    .getSearchManager(IspnCacheManager.getCacheManager().getCache("backend"));
+            searchManager.getMassIndexer().start();
+            long stopReindex = System.currentTimeMillis();
+            log.info("Reindexing Ispn [backend] completed in [" + (stopReindex - startReindex) + " ms]");
+        }
 
-        engine.setDefinitions(definitions);
-        engine.setActions(actions);
+        ispnActions = new IspnActionsServiceImpl();
+        ispnAlerts = new IspnAlertsServiceImpl();
+        ispnDefinitions = new IspnDefinitionsServiceImpl();
+
+        ispnActions.setActionsCacheManager(actionsCacheManager);
+        ispnActions.setAlertsContext(alertsContext);
+        ispnActions.setDefinitions(ispnDefinitions);
+
+        ispnAlerts.setActionsService(ispnActions);
+        ispnAlerts.setAlertsEngine(engine);
+        ispnAlerts.setDefinitionsService(ispnDefinitions);
+        ispnAlerts.setIncomingDataManager(incoming);
+        ispnAlerts.setProperties(properties);
+
+        ispnDefinitions.setAlertsEngine(engine);
+        ispnDefinitions.setAlertsContext(alertsContext);
+        ispnDefinitions.setProperties(properties);
+
+        actionsCacheManager.setGlobalActionsCache(cacheManager.getCache("globalActions"));
+
+        alertsContext.setPartitionManager(partitionManager);
+
+        dataDrivenGroupCacheManager.setDefinitions(ispnDefinitions);
+
+        dataIdCache.setCache(cacheManager.getCache("publish"));
+
+        engine.setActions(ispnActions);
+        engine.setAlertsService(ispnAlerts);
+        engine.setDefinitions(ispnDefinitions);
+        engine.setExecutor(executor);
+        engine.setExtensionsService(extensions);
+        engine.setPartitionManager(partitionManager);
         engine.setRules(rules);
 
-        log.debug("Waiting for initialization...");
-        try {
-            for (int i = 0; i < INIT_TIME_COUNT; i++) {
-                log.debug(".");
-                Thread.sleep(INIT_TIME_SLEEP);
-            }
-        } catch (InterruptedException e) {
-            log.error(e.getMessage(), e);
+        incoming.setAlertsEngine(engine);
+        incoming.setDataDrivenGroupCacheManager(dataDrivenGroupCacheManager);
+        incoming.setDataIdCache(dataIdCache);
+        incoming.setDefinitionsService(ispnDefinitions);
+        incoming.setExecutor(executor);
+        incoming.setPartitionManager(partitionManager);
+
+        partitionManager.setDefinitionsService(ispnDefinitions);
+
+        actionsCacheManager.setDefinitions(ispnDefinitions);
+        actionsCacheManager.setGlobalActionsCache(cacheManager.getCache("globalActions"));
+
+        publishCacheManager.setDefinitions(ispnDefinitions);
+        publishCacheManager.setProperties(properties);
+        publishCacheManager.setPublishCache(cacheManager.getCache("publish"));
+        publishCacheManager.setPublishDataIdsCache(cacheManager.getCache("dataIds"));
+
+        status.setPartitionManager(partitionManager);
+
+        cepEngineImpl.setAlertsService(ispnAlerts);
+        cepEngineImpl.setExecutor(executor);
+
+        eventsAggregationExtension.setCep(cepEngineImpl);
+        eventsAggregationExtension.setDefinitions(ispnDefinitions);
+        eventsAggregationExtension.setExtensions(extensions);
+        eventsAggregationExtension.setProperties(properties);
+        eventsAggregationExtension.setExecutor(executor);
+
+        // Initialization needs order
+
+        ispnAlerts.init();
+        ispnDefinitions.init();
+        ispnActions.init();
+
+        partitionManager.init();
+        alertsContext.init();
+        dataDrivenGroupCacheManager.init();
+        actionsCacheManager.init();
+        publishCacheManager.init();
+        extensions.init();
+        engine.initServices();
+        eventsAggregationExtension.init();
+    }
+
+    private static synchronized void init() {
+        instance = new StandaloneAlerts();
+    }
+
+    public static ExecutorService getExecutor() {
+        return executor;
+    }
+
+    public static void setExecutor(ExecutorService executor) {
+        StandaloneAlerts.executor = executor;
+    }
+
+    public static void start() {
+        init();
+    }
+
+    public static void stop() {
+        if (instance != null) {
+            instance.engine.shutdown();
+            instance.partitionManager.shutdown();
+            IspnCacheManager.stop();
+            instance = null;
         }
     }
 
-    public static synchronized DefinitionsService getDefinitionsService(Session session) {
+    public static DefinitionsService getDefinitionsService() {
         if (instance == null) {
-            instance = new StandaloneAlerts(session);
+            init();
         }
-        return instance.definitions;
+        return instance.ispnDefinitions;
     }
 
-    public static synchronized AlertsService getAlertsService(Session session) {
+    public static AlertsService getAlertsService() {
         if (instance == null) {
-            instance = new StandaloneAlerts(session);
+            init();
         }
-        return instance.alerts;
+        return instance.ispnAlerts;
     }
 
-    public static synchronized ActionsService getActionsService(Session session) {
+    public static ActionsService getActionsService() {
         if (instance == null) {
-            instance = new StandaloneAlerts(session);
+            init();
         }
-        return instance.actions;
+        return instance.ispnActions;
     }
 
-    public static class StandaloneExecutorService implements ManagedExecutorService {
-
-        private ExecutorService executor;
-
-        public StandaloneExecutorService() {
-            executor = Executors.newSingleThreadExecutor();
+    public static StatusService getStatusService() {
+        if (instance == null) {
+            init();
         }
+        return instance.status;
+    }
+
+    public class AlertsThreadFactory implements ThreadFactory {
+        private int count = 0;
 
         @Override
-        public void shutdown() {
-            executor.shutdown();
-        }
-
-        @Override
-        public List<Runnable> shutdownNow() {
-            return executor.shutdownNow();
-        }
-
-        @Override
-        public boolean isShutdown() {
-            return executor.isShutdown();
-        }
-
-        @Override
-        public boolean isTerminated() {
-            return executor.isTerminated();
-        }
-
-        @Override
-        public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
-            return executor.awaitTermination(timeout, unit);
-        }
-
-        @Override
-        public <T> Future<T> submit(Callable<T> task) {
-            return executor.submit(task);
-        }
-
-        @Override
-        public <T> Future<T> submit(Runnable task, T result) {
-            return executor.submit(task, result);
-        }
-
-        @Override
-        public Future<?> submit(Runnable task) {
-            return executor.submit(task);
-        }
-
-        @Override
-        public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks)
-                throws InterruptedException {
-            return executor.invokeAll(tasks);
-        }
-
-        @Override
-        public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit)
-                throws InterruptedException {
-            return executor.invokeAll(tasks, timeout, unit);
-        }
-
-        @Override
-        public <T> T invokeAny(Collection<? extends Callable<T>> tasks)
-                throws InterruptedException, ExecutionException {
-            return executor.invokeAny(tasks);
-        }
-
-        @Override
-        public <T> T invokeAny(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit)
-                throws InterruptedException, ExecutionException, TimeoutException {
-            return executor.invokeAny(tasks, timeout, unit);
-        }
-
-        @Override
-        public void execute(Runnable command) {
-            executor.execute(command);
+        public Thread newThread(Runnable r) {
+            return new Thread(r, "HawkularAlerts-" + (++count));
         }
     }
 }
