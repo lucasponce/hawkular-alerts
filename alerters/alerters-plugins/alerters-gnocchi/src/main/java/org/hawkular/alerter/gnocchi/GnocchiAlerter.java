@@ -184,6 +184,17 @@ import org.hawkular.commons.properties.HawkularProperties;
  *
  *   The aggregated metric will be used as Data.dataId field in Hawkular Alerting to be referred in conditions.
  *
+ * - [Optional]     trigger.context["metric.granularity"] = "<Gnocchi metric granularity>"
+ *
+ *   The alerter can define the granularity of the metrics defined.
+ *   If not present granularity is set to 300.
+ *
+ *   i.e.
+ *
+ *      trigger.context["metric.granularity"] = "1"
+ *
+ *   Granularity defined will be annotated in the context of Hawkular Data.
+ *
  * </pre>
  *
  * @author Jay Shaughnessy

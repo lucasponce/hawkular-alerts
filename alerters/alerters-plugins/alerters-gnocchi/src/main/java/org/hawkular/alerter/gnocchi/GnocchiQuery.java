@@ -50,6 +50,8 @@ public class GnocchiQuery implements Runnable {
     private static final String METRIC_NAMES_REGEXP = "metric.names.regexp";
     private static final String METRIC_RESOURCE_QUERY = "metric.resource.query";
     private static final String METRIC_AGGREGATION = "metric.aggregation";
+    private static final String METRIC_GRANULARITY = "metric.granularity";
+    private static final String METRIC_GRANULARITY_DEFAULT = "300";
 
     private Trigger trigger;
     private Map<String, String> properties;
@@ -63,6 +65,7 @@ public class GnocchiQuery implements Runnable {
     private String metricResourceQuery;
     private String metricAggregation;
     private String interval;
+    private String granularity;
 
     private Map<String, String> nameIdMetrics = new HashMap<>();
     private Map<String, List<String>> aggregatedMetrics = new HashMap<>();
@@ -85,6 +88,7 @@ public class GnocchiQuery implements Runnable {
             metricResourceQuery = trigger.getContext().get(METRIC_RESOURCE_QUERY);
             metricAggregation = trigger.getContext().get(METRIC_AGGREGATION);
             interval = trigger.getContext().get(INTERVAL) == null ? INTERVAL_DEFAULT : trigger.getContext().get(INTERVAL);
+            granularity = trigger.getContext().get(METRIC_GRANULARITY) == null ? METRIC_GRANULARITY_DEFAULT : trigger.getContext().get(METRIC_GRANULARITY);
         }
         if (isEmpty(baseUrl)) {
             baseUrl = this.properties.getOrDefault(GnocchiAlerter.URL, GnocchiAlerter.GNOCCHI_URL_DEFAULT);
@@ -244,6 +248,9 @@ public class GnocchiQuery implements Runnable {
                 StringBuilder url = new StringBuilder(baseUrl)
                         .append("/v1/aggregation/metric?aggregation=")
                         .append(aggregatedInfo.get(0))
+                        .append("&")
+                        .append("granularity=")
+                        .append(granularity)
                         .append("&");
                 for (int i = 1; i < aggregatedInfo.size(); i++) {
                     if (nameIdMetrics.containsKey(aggregatedInfo.get(i))) {
@@ -259,7 +266,9 @@ public class GnocchiQuery implements Runnable {
                 StringBuilder url = new StringBuilder(baseUrl)
                         .append("/v1/metric/")
                         .append(entry.getValue())
-                        .append("/measures?");
+                        .append("/measures?granularity=")
+                        .append(granularity)
+                        .append("&");
                 queries.put(entry.getKey(), url.toString());
             }
         }
@@ -364,9 +373,12 @@ public class GnocchiQuery implements Runnable {
                     for (int i = 0; i < measures.size(); i++) {
                         List measure = (List)measures.get(i);
                         if (measure != null && measure.size() == 3) {
-                            String timestamp = (String)measure.get(0);
-                            Double value = (Double)measure.get(2);
-                            data.add(Data.forNumeric(trigger.getTenantId(), metricName, parseTimestamp(timestamp), value));
+                            String timestamp = (String) measure.get(0);
+                            Double granularity = (Double) measure.get(1);
+                            Double value = (Double) measure.get(2);
+                            Map<String, String> context = new HashMap<>();
+                            context.put("granularity", String.valueOf(granularity));
+                            data.add(Data.forNumeric(trigger.getTenantId(), metricName, parseTimestamp(timestamp), value, context));
                         }
                     }
                     log.debugf("Sending [%s]", data);
