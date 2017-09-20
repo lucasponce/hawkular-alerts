@@ -41,8 +41,22 @@
     </dependency>
 
     <dependency>
+      <groupId>org.hawkular.alerts</groupId>
+      <artifactId>hawkular-alerts-engine</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
       <groupId>org.hawkular.commons</groupId>
       <artifactId>hawkular-bus-common</artifactId>
+      <version>${version.org.hawkular.commons}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.hawkular.commons</groupId>
+      <artifactId>hawkular-server</artifactId>
       <version>${version.org.hawkular.commons}</version>
       <scope>test</scope>
     </dependency>
@@ -276,6 +290,7 @@
         <hawkular.base-uri>http://${hawkular.host}:${hawkular.port}${hawkular.path}</hawkular.base-uri>
         <hawkular.management.port>9990</hawkular.management.port>
         <hawkular.log.alerts>INFO</hawkular.log.alerts>
+        <hawkular.data>${project.build.directory}/ispn</hawkular.data>
       </properties>
       <dependencies>
         <dependency>
@@ -302,12 +317,6 @@
               <artifactId>*</artifactId>
             </exclusion>
           </exclusions>
-        </dependency>
-        <dependency>
-          <groupId>org.hawkular.commons</groupId>
-          <artifactId>hawkular-commons-embedded-cassandra-war</artifactId>
-          <version>${version.org.hawkular.commons}</version>
-          <type>war</type>
         </dependency>
       </dependencies>
       <build>
@@ -367,14 +376,6 @@
                       <overWrite>true</overWrite>
                       <outputDirectory>${project.build.directory}/${project.build.finalName}/modules/system/layers/hawkular/org/hawkular/nest/main/deployments</outputDirectory>
                       <destFileName>hawkular-alerts-actions-file.war</destFileName>
-                    </artifactItem>
-                    <artifactItem>
-                      <groupId>org.hawkular.commons</groupId>
-                      <artifactId>hawkular-commons-embedded-cassandra-war</artifactId>
-                      <type>war</type>
-                      <overWrite>true</overWrite>
-                      <outputDirectory>${project.build.directory}/${project.build.finalName}/modules/system/layers/hawkular/org/hawkular/nest/main/deployments</outputDirectory>
-                      <destFileName>hawkular-commons-embedded-cassandra-war.war</destFileName>
                     </artifactItem>
                   </artifactItems>
                 </configuration>
@@ -459,10 +460,10 @@
                 <javaOpt>-Dkeycloak.import=${project.build.directory}/${project.build.finalName}/standalone/configuration/hawkular-realm-for-dev.json</javaOpt>
                 <javaOpt>-Dmail.smtp.host=localhost</javaOpt>
                 <javaOpt>-Dmail.smtp.port=2525</javaOpt>
-                <javaOpt>-Dhawkular.backend=embedded_cassandra</javaOpt>
                 <javaOpt>-Dhawkular.log.alerts=${hawkular.log.alerts}</javaOpt>
                 <javaOpt>-Dhawkular.allowed-cors-origins=http://test.hawkular.org,https://secure.hawkular.io</javaOpt>
                 <javaOpt>-Dhawkular.allowed-cors-access-control-allow-headers=random-header1,random-header2</javaOpt>
+                <javaOpt>-Dhawkular.data=${project.build.directory}/ispn</javaOpt>
                 <!-- <javaOpt>-Xdebug</javaOpt>  -->
                 <!-- <javaOpt>-Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</javaOpt> -->
               </javaOpts>
@@ -570,12 +571,6 @@
             </exclusion>
           </exclusions>
         </dependency>
-        <dependency>
-          <groupId>org.hawkular.commons</groupId>
-          <artifactId>hawkular-commons-embedded-cassandra-war</artifactId>
-          <version>${version.org.hawkular.commons}</version>
-          <type>war</type>
-        </dependency>
       </dependencies>
       <build>
         <plugins>
@@ -634,14 +629,6 @@
                       <overWrite>true</overWrite>
                       <outputDirectory>${project.build.directory}/${project.build.finalName}/modules/system/layers/hawkular/org/hawkular/nest/main/deployments</outputDirectory>
                       <destFileName>hawkular-alerts-actions-file.war</destFileName>
-                    </artifactItem>
-                    <artifactItem>
-                      <groupId>org.hawkular.commons</groupId>
-                      <artifactId>hawkular-commons-embedded-cassandra-war</artifactId>
-                      <type>war</type>
-                      <overWrite>true</overWrite>
-                      <outputDirectory>${project.build.directory}/${project.build.finalName}/modules/system/layers/hawkular/org/hawkular/nest/main/deployments</outputDirectory>
-                      <destFileName>hawkular-commons-embedded-cassandra-war.war</destFileName>
                     </artifactItem>
                   </artifactItems>
                 </configuration>
@@ -726,7 +713,6 @@
                 <javaOpt>-Dkeycloak.import=${project.build.directory}/${project.build.finalName}/standalone/configuration/hawkular-realm-for-dev.json</javaOpt>
                 <javaOpt>-Dmail.smtp.host=localhost</javaOpt>
                 <javaOpt>-Dmail.smtp.port=2525</javaOpt>
-                <javaOpt>-Dhawkular.backend=embedded_cassandra</javaOpt>
                 <javaOpt>-Dhawkular.log.alerts=${hawkular.log.alerts}</javaOpt>
                 <javaOpt>-Dhawkular.allowed-cors-origins=http://test.hawkular.org,https://secure.hawkular.io</javaOpt>
                 <javaOpt>-Dhawkular.allowed-cors-access-control-allow-headers=random-header1,random-header2</javaOpt>
@@ -819,13 +805,6 @@
       <dependencies>
 
         <dependency>
-          <groupId>org.hawkular.commons</groupId>
-          <artifactId>hawkular-commons-embedded-cassandra-war</artifactId>
-          <version>${version.org.hawkular.commons}</version>
-          <type>war</type>
-        </dependency>
-
-        <dependency>
           <groupId>org.wildfly</groupId>
           <artifactId>wildfly-dist</artifactId>
           <version>${version.org.wildfly}</version>
@@ -862,14 +841,6 @@
                 </goals>
                 <configuration>
                   <artifactItems>
-                    <artifactItem>
-                      <groupId>org.hawkular.commons</groupId>
-                      <artifactId>hawkular-commons-embedded-cassandra-war</artifactId>
-                      <type>war</type>
-                      <overWrite>true</overWrite>
-                      <outputDirectory>${hawkular.deployments}</outputDirectory>
-                      <destFileName>hawkular-commons-embedded-cassandra-war.war</destFileName>
-                    </artifactItem>
                     <artifactItem>
                       <groupId>org.hawkular.alerts</groupId>
                       <artifactId>hawkular-alerts-rest-standalone</artifactId>
@@ -1001,13 +972,6 @@
       <dependencies>
 
         <dependency>
-          <groupId>org.hawkular.commons</groupId>
-          <artifactId>hawkular-commons-embedded-cassandra-war</artifactId>
-          <version>${version.org.hawkular.commons}</version>
-          <type>war</type>
-        </dependency>
-
-        <dependency>
           <groupId>org.hawkular.alerts</groupId>
           <artifactId>hawkular-alerts-rest-standalone</artifactId>
           <version>${project.version}</version>
@@ -1051,14 +1015,6 @@
                 </goals>
                 <configuration>
                   <artifactItems>
-                    <artifactItem>
-                      <groupId>org.hawkular.commons</groupId>
-                      <artifactId>hawkular-commons-embedded-cassandra-war</artifactId>
-                      <type>war</type>
-                      <overWrite>true</overWrite>
-                      <outputDirectory>${project.build.directory}</outputDirectory>
-                      <destFileName>hawkular-commons-embedded-cassandra-war.war</destFileName>
-                    </artifactItem>
                     <artifactItem>
                       <groupId>org.hawkular.alerts</groupId>
                       <artifactId>hawkular-alerts-rest-standalone</artifactId>
@@ -1137,21 +1093,6 @@
                 <goals>
                   <goal>start</goal>
                 </goals>
-              </execution>
-              <execution>
-                <id>deploy-embedded-cassandra</id>
-                <phase>pre-integration-test</phase>
-                <goals>
-                  <goal>deploy</goal>
-                </goals>
-                <configuration>
-                  <domain>
-                    <server-groups>
-                      <server-group>cassandra-group</server-group>
-                    </server-groups>
-                  </domain>
-                  <filename>hawkular-commons-embedded-cassandra-war.war</filename>
-                </configuration>
               </execution>
               <execution>
                 <id>deploy-hawkular-alerts</id>
@@ -1243,6 +1184,7 @@
                 <configuration>
                   <includes>
                     <include>org/hawkular/alerts/rest/IntegrationSuite.class</include>
+                    <include>org/hawkular/alerts/engine/IspnPersistenceTest.class</include>
                   </includes>
                 </configuration>
               </execution>

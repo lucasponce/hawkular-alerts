@@ -82,17 +82,6 @@
     </dependency>
 
     <dependency>
-      <groupId>org.cassalog</groupId>
-      <artifactId>cassalog</artifactId>
-      <version>${version.org.cassalog}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>com.datastax.cassandra</groupId>
-      <artifactId>cassandra-driver-core</artifactId>
-    </dependency>
-
-    <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
       <version>${version.com.google.guava}</version>
@@ -157,14 +146,21 @@
     <dependency>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-core</artifactId>
-      <scope>provided</scope>
       <version>${version.org.infinispan.wildfly}</version>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-core</artifactId>
       <version>${version.org.infinispan.wildfly}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.hibernate</groupId>
+      <artifactId>hibernate-search-engine</artifactId>
+      <version>5.7.0.Final</version>
     </dependency>
 
     <dependency>
@@ -176,9 +172,25 @@
           <groupId>org.hibernate</groupId>
           <artifactId>hibernate-search-backend-elasticsearch</artifactId>
         </exclusion>
+<!--
+        <exclusion>
+          <groupId>org.hibernate</groupId>
+          <artifactId>hibernate-search-engine</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.hibernate</groupId>
+          <artifactId>hibernate-search-serialization-avro</artifactId>
+        </exclusion>
+-->
       </exclusions>
     </dependency>
-
+<!--
+    <dependency>
+      <groupId>org.hibernate</groupId>
+      <artifactId>hibernate-search-serialization-avro</artifactId>
+      <version>5.7.0.Final</version>
+    </dependency>
+ -->
 
     <!-- Tests -->
     <dependency>
@@ -285,7 +297,14 @@
                   <name>testOutput</name>
                   <value>${project.build.testOutputDirectory}</value>
                 </property>
+                <property>
+                  <name>hawkular.data</name>
+                  <value>${project.build.directory}/ispn</value>
+                </property>
               </systemProperties>
+              <includes>
+                <include>**/*/*IspnAlertsSe*Test.java</include>
+              </includes>
               <excludes>
                 <exclude>**/*/PerfRulesEngineTest.java</exclude>
               </excludes>
@@ -313,6 +332,10 @@
                 <property>
                   <name>testOutput</name>
                   <value>${project.build.testOutputDirectory}</value>
+                </property>
+                <property>
+                  <name>hawkular.data</name>
+                  <value>${project.build.directory}/ispn</value>
                 </property>
               </systemProperties>
             </configuration>

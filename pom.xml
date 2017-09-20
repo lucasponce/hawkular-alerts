@@ -23,7 +23,7 @@
   <parent>
     <groupId>org.hawkular</groupId>
     <artifactId>hawkular-parent</artifactId>
-    <version>50</version>
+    <version>56-SNAPSHOT</version>
   </parent>
 
   <groupId>org.hawkular.alerts</groupId>
@@ -78,7 +78,6 @@
     <version.org.antlr>4.6</version.org.antlr>
     <version.org.apache.commons.commons-math3>3.4.1</version.org.apache.commons.commons-math3>
     <version.org.apache.logging.log4j-elasticsearch>2.8</version.org.apache.logging.log4j-elasticsearch>
-    <version.org.cassalog>0.4.2</version.org.cassalog>
     <version.org.codehaus.jsr166-mirror>1.7.0</version.org.codehaus.jsr166-mirror>
     <version.org.codehaus.gpars>1.2.0</version.org.codehaus.gpars>
     <version.org.codehaus.groovy.maven>1.0</version.org.codehaus.groovy.maven>
@@ -87,8 +86,8 @@
     <version.org.freemarker>2.3.23</version.org.freemarker>
     <version.org.hawkular.commons>0.9.7.Final</version.org.hawkular.commons>
     <version.org.infinispan.wildfly>9.0.0.Final</version.org.infinispan.wildfly>
-    <version.org.infinispan.eap64>5.2.9.Final</version.org.infinispan.eap64>
-    <version.org.jboss.jboss-vfs>3.2.10.Final</version.org.jboss.jboss-vfs>
+    <version.org.infinispan.eap71>8.2.6.Final</version.org.infinispan.eap71>
+    <version.org.jboss.jboss-vfs>3.2.12.Final</version.org.jboss.jboss-vfs> <!-- match WF version -->
     <version.org.schwering>2.0.0.Alpha3</version.org.schwering>
     <version.org.slf4j>1.7.2</version.org.slf4j>
     <version.org.yaml>1.11</version.org.yaml>

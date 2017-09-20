@@ -19,8 +19,6 @@ package org.hawkular.alerts.api.model.condition;
 import java.io.Serializable;
 import java.util.Map;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
 import org.hawkular.alerts.api.json.JacksonDeserializer;
 import org.hawkular.alerts.api.model.condition.Condition.Type;
 
@@ -28,6 +26,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 
 /**
  * An evaluation state of a specific condition.

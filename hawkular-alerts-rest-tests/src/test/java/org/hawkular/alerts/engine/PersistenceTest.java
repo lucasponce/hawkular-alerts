@@ -92,6 +92,7 @@ public abstract class PersistenceTest {
         User = jdoe
      */
     public static final String TENANT = "28026b36-8fe4-4332-84c8-524e173a68bf";
+
     static DefinitionsService definitionsService;
     static AlertsService alertsService;
     static ActionsService actionsService;

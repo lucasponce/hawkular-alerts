@@ -63,7 +63,7 @@ import org.jboss.logging.Logger;
  * @author Jay Shaughnessy
  * @author Lucas Ponce
  */
-@Local(DefinitionsService.class)
+@Local(ActionsService.class)
 @Stateless
 @TransactionAttribute(value = TransactionAttributeType.NOT_SUPPORTED)
 public class IspnActionsServiceImpl implements ActionsService {
@@ -149,7 +149,7 @@ public class IspnActionsServiceImpl implements ActionsService {
             existingAction.setResult(action.getResult());
             backend.put(pk, new IspnAction(existingAction));
         } catch (Exception e) {
-            log.errorDatabaseException(e.getMessage());
+            msgLog.errorDatabaseException(e.getMessage());
             throw e;
         }
     }
@@ -221,7 +221,8 @@ public class IspnActionsServiceImpl implements ActionsService {
             }
         }
 
-        List<IspnAction> ispnActions = queryFactory.create(query.toString()).list();
+        // List<IspnAction> ispnActions = queryFactory.create(query.toString()).list();
+        List<IspnAction> ispnActions = Collections.emptyList();
         return prepareActionsPage(ispnActions.stream().map(ispnAction -> {
             if (criteria != null && criteria.isThin()) {
                 Action action = new Action(ispnAction.getAction());
@@ -267,9 +268,9 @@ public class IspnActionsServiceImpl implements ActionsService {
             try {
                 backend.endBatch(false);
             } catch (Exception e2) {
-                log.errorDatabaseException(e2.getMessage());
+                msgLog.errorDatabaseException(e2.getMessage());
             }
-            log.errorDatabaseException(e.getMessage());
+            msgLog.errorDatabaseException(e.getMessage());
             throw e;
         }
     }
@@ -353,7 +354,7 @@ public class IspnActionsServiceImpl implements ActionsService {
             }
         } catch (Exception e) {
             log.debug(e.getMessage(), e);
-            log.errorCannotUpdateAction(e.getMessage());
+            msgLog.errorCannotUpdateAction(e.getMessage());
         }
     }
 
@@ -391,7 +392,7 @@ public class IspnActionsServiceImpl implements ActionsService {
             }
         } catch (Exception e) {
             log.debug(e.getMessage(), e);
-            log.errorCannotUpdateAction(e.getMessage());
+            msgLog.errorCannotUpdateAction(e.getMessage());
         }
     }
 
@@ -415,7 +416,7 @@ public class IspnActionsServiceImpl implements ActionsService {
         try {
             backend.put(IspnPk.pk(action), new IspnAction(action));
         } catch (Exception e) {
-            log.errorDatabaseException(e.getMessage());
+            msgLog.errorDatabaseException(e.getMessage());
         }
     }
 

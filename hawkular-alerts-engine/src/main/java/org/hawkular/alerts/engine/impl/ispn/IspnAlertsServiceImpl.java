@@ -24,6 +24,7 @@ import static org.hawkular.alerts.engine.tags.ExpressionTagQueryParser.Expressio
 import static org.hawkular.alerts.engine.util.Utils.extractAlertIds;
 import static org.hawkular.alerts.engine.util.Utils.extractCategories;
 import static org.hawkular.alerts.engine.util.Utils.extractEventIds;
+import static org.hawkular.alerts.engine.util.Utils.extractSeverity;
 import static org.hawkular.alerts.engine.util.Utils.extractStatus;
 import static org.hawkular.alerts.engine.util.Utils.extractTriggerIds;
 
@@ -41,7 +42,6 @@ import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 
-import org.hawkular.alerts.api.model.Severity;
 import org.hawkular.alerts.api.model.condition.ConditionEval;
 import org.hawkular.alerts.api.model.data.Data;
 import org.hawkular.alerts.api.model.event.Alert;
@@ -68,7 +68,10 @@ import org.hawkular.alerts.engine.impl.ispn.model.TagsBridge;
 import org.hawkular.alerts.engine.log.MsgLogger;
 import org.hawkular.alerts.engine.service.AlertsEngine;
 import org.hawkular.alerts.engine.service.IncomingDataManager;
+import org.hibernate.search.query.dsl.BooleanJunction;
+import org.hibernate.search.query.dsl.QueryBuilder;
 import org.infinispan.Cache;
+import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.QueryFactory;
 import org.jboss.logging.Logger;
@@ -77,7 +80,7 @@ import org.jboss.logging.Logger;
  * @author Jay Shaughnessy
  * @author Lucas Ponce
  */
-@Local(DefinitionsService.class)
+@Local(AlertsService.class)
 @Stateless
 @TransactionAttribute(value = TransactionAttributeType.NOT_SUPPORTED)
 public class IspnAlertsServiceImpl implements AlertsService {
@@ -428,128 +431,90 @@ public class IspnAlertsServiceImpl implements AlertsService {
             log.debugf("getAlerts criteria: %s", criteria.toString());
         }
 
-        StringBuilder query = new StringBuilder("from org.hawkular.alerts.engine.impl.ispn.model.IspnEvent where ");
-        query.append("eventType = 'ALERT' and ");
-        query.append("(");
-        Iterator<String> iter = tenantIds.iterator();
-        while (iter.hasNext()) {
-            String tenantId = iter.next();
-            query.append("tenantId = '").append(tenantId).append("' ");
-            if (iter.hasNext()) {
-                query.append("or ");
-            }
-        }
-        query.append(") ");
+        QueryBuilder hqb = Search.getSearchManager(backend).buildQueryBuilderForClass(IspnEvent.class).get();
+        BooleanJunction<?> bj = hqb.bool();
+
+        bj.must(hqb.keyword().onField("eventType").matching("ALERT").createQuery());
+
+        System.out.println("TENANTS '" + String.join(" ", tenantIds) + "'");
+        bj.must(hqb.keyword().onField("tenantId").matching(String.join(" ", tenantIds)).createQuery());
+        //for (String s : tenantIds) {
+        //    bj.should(hqb.keyword().onField("tenantId").matching(s).createQuery());
+        //}
 
         if (filter) {
            if (criteria.hasAlertIdCriteria()) {
-               query.append("and (");
-               iter = extractAlertIds(criteria).iterator();
-               while (iter.hasNext()) {
-                   String alertId = iter.next();
-                   query.append("id = '").append(alertId).append("' ");
-                   if (iter.hasNext()) {
-                       query.append("or ");
-                   }
-               }
-               query.append(") ");
+                Set<String> alertIds = extractAlertIds(criteria);
+                bj.must(hqb.keyword().onField("id").matching(String.join(" ", alertIds)).createQuery());
            }
            if (criteria.hasTagQueryCriteria()) {
-               query.append("and (tags : ");
-               parseTagQuery(criteria.getTagQuery(), query);
-               query.append(") ");
+                StringBuilder sb = new StringBuilder();
+                parseTagQuery(criteria.getTagQuery(), sb);
+                bj.must(hqb.keyword().onField("tags").matching(sb.toString()).createQuery());
            }
            if (criteria.hasTriggerIdCriteria()) {
-                query.append("and (");
-                iter = extractTriggerIds(criteria).iterator();
-                while (iter.hasNext()) {
-                    String triggerId = iter.next();
-                    query.append("triggerId = '").append(triggerId).append("' ");
-                    if (iter.hasNext()) {
-                        query.append("or ");
-                    }
-                }
-                query.append(") ");
+                Set<String> triggerIds = extractTriggerIds(criteria);
+                bj.must(hqb.keyword().onField("triggerId").matching(String.join(" ", triggerIds)).createQuery());
            }
            if (criteria.hasCTimeCriteria()) {
-                query.append("and (");
-                if (criteria.getStartTime() != null) {
-                    query.append("ctime >= ").append(criteria.getStartTime()).append(" ");
+                if (criteria.getStartTime() != null && criteria.getEndTime() != null) {
+                    bj.must(hqb.range().onField("ctime").from(criteria.getStartTime()).to(criteria.getEndTime())
+                            .createQuery());
+                } else if (criteria.getStartTime() != null) {
+                    bj.must(hqb.range().onField("ctime").above(criteria.getStartTime()).createQuery());
+                } else if (criteria.getEndTime() != null) {
+                    bj.must(hqb.range().onField("ctime").below(criteria.getEndTime()).createQuery());
                 }
-                if (criteria.getEndTime() != null) {
-                    if (criteria.getStartTime() != null) {
-                        query.append("and ");
-                    }
-                    query.append("ctime <= ").append(criteria.getEndTime()).append(" ");
-                }
-                query.append(") ");
            }
            if (criteria.hasResolvedTimeCriteria()) {
-               query.append("and (status = '").append(Status.RESOLVED.name()).append("' and ");
-               if (criteria.getStartResolvedTime() != null) {
-                   query.append("stime >= ").append(criteria.getStartResolvedTime()).append(" ");
+                bj.must(hqb.keyword().onField("status").matching(Status.RESOLVED.name()).createQuery());
+                if (criteria.getStartResolvedTime() != null && criteria.getEndResolvedTime() != null) {
+                    bj.must(hqb.range().onField("stime").from(criteria.getStartResolvedTime())
+                            .to(criteria.getEndResolvedTime())
+                            .createQuery());
+                } else if (criteria.getStartResolvedTime() != null) {
+                    bj.must(hqb.range().onField("stime").above(criteria.getStartResolvedTime()).createQuery());
+                } else if (criteria.getEndResolvedTime() != null) {
+                    bj.must(hqb.range().onField("stime").below(criteria.getEndResolvedTime()).createQuery());
                }
-               if (criteria.getEndResolvedTime() != null) {
-                   if (criteria.getStartResolvedTime() != null) {
-                       query.append("and ");
-                   }
-                   query.append("stime <= ").append(criteria.getEndResolvedTime()).append(" ");
-               }
-               query.append(") ");
            }
            if (criteria.hasAckTimeCriteria()) {
-               query.append("and (status = '").append(Status.ACKNOWLEDGED.name()).append("' and ");
-               if (criteria.getStartAckTime() != null) {
-                   query.append("stime >= ").append(criteria.getStartAckTime()).append(" ");
+                bj.must(hqb.keyword().onField("status").matching(Status.ACKNOWLEDGED.name()).createQuery());
+                if (criteria.getStartAckTime() != null && criteria.getEndAckTime() != null) {
+                    bj.must(hqb.range().onField("stime").from(criteria.getStartAckTime()).to(criteria.getEndAckTime())
+                            .createQuery());
+                } else if (criteria.getStartAckTime() != null) {
+                    bj.must(hqb.range().onField("stime").above(criteria.getStartAckTime()).createQuery());
+                } else if (criteria.getEndAckTime() != null) {
+                    bj.must(hqb.range().onField("stime").below(criteria.getEndAckTime()).createQuery());
                }
-               if (criteria.getEndAckTime() != null) {
-                   if (criteria.getStartAckTime() != null) {
-                       query.append("and ");
-                   }
-                   query.append("stime <= ").append(criteria.getEndAckTime()).append(" ");
-               }
-               query.append(") ");
            }
            if (criteria.hasStatusTimeCriteria()) {
-               query.append("and (");
-               if (criteria.getStartStatusTime() != null) {
-                   query.append("stime >= ").append(criteria.getStartStatusTime()).append(" ");
+                if (criteria.getStartAckTime() != null && criteria.getEndAckTime() != null) {
+                    bj.must(hqb.range().onField("stime").from(criteria.getStartStatusTime())
+                            .to(criteria.getEndStatusTime()).createQuery());
+                } else if (criteria.getStartStatusTime() != null) {
+                    bj.must(hqb.range().onField("stime").above(criteria.getStartStatusTime()).createQuery());
+                } else if (criteria.getEndStatusTime() != null) {
+                    bj.must(hqb.range().onField("stime").below(criteria.getEndStatusTime()).createQuery());
                }
-               if (criteria.getEndTime() != null) {
-                   if (criteria.getStartTime() != null) {
-                       query.append("and ");
-                   }
-                   query.append("stime <= ").append(criteria.getEndStatusTime()).append(" ");
-               }
-               query.append(") ");
            }
            if (criteria.hasSeverityCriteria()) {
-               query.append("and (");
-               Iterator<Severity> iterSev = criteria.getSeverities().iterator();
-               while (iterSev.hasNext()) {
-                   Severity severity = iterSev.next();
-                   query.append("severity = '").append(severity.name()).append("' ");
-                   if (iterSev.hasNext()) {
-                       query.append(" or ");
-                   }
-               }
-               query.append(") ");
+               Set<String> severityNames = extractSeverity(criteria).stream().
+                       map(s -> s.name())
+                       .collect(Collectors.toSet());
+               bj.must(hqb.keyword().onField("severity").matching(String.join(" ", severityNames)).createQuery());
            }
            if (criteria.hasStatusCriteria()) {
-               query.append("and (");
-               Iterator<Status> iterStatus = extractStatus(criteria).iterator();
-               while (iterStatus.hasNext()) {
-                   Status status = iterStatus.next();
-                   query.append("status = '").append(status.name()).append("' ");
-                   if (iterStatus.hasNext()) {
-                       query.append(" or ");
-                   }
-               }
-               query.append(") ");
-           }
+               Set<String> statusNames = extractStatus(criteria).stream().
+                       map(s -> s.name())
+                       .collect(Collectors.toSet());
+               bj.must(hqb.keyword().onField("status").matching(String.join(" ", statusNames)).createQuery());
+            }
         }
 
-        List<IspnEvent> ispnEvents = queryFactory.create(query.toString()).list();
+        CacheQuery<IspnEvent> cacheQuery = Search.getSearchManager(backend).getQuery(bj.createQuery());
+        List<IspnEvent> ispnEvents = cacheQuery.list();
         List<Alert> alerts = ispnEvents.stream().map(ispnEvent -> {
             if (criteria != null && criteria.isThin()) {
                 Alert alert = new Alert((Alert) ispnEvent.getEvent());
@@ -673,7 +638,8 @@ public class IspnAlertsServiceImpl implements AlertsService {
             }
         }
 
-        List<IspnEvent> ispnEvents = queryFactory.create(query.toString()).list();
+        //TODO List<IspnEvent> ispnEvents = queryFactory.create(query.toString()).list();
+        List<IspnEvent> ispnEvents = Collections.emptyList();
         List<Event> events = ispnEvents.stream().map(e -> e.getEvent()).collect(Collectors.toList());
         if (events.isEmpty()) {
             return new Page<>(events, pager, 0);

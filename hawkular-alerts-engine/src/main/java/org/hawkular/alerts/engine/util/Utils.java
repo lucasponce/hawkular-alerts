@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.hawkular.alerts.api.model.Severity;
 import org.hawkular.alerts.api.model.dampening.Dampening;
 import org.hawkular.alerts.api.model.event.Alert.Status;
 import org.hawkular.alerts.api.model.trigger.Trigger;
@@ -115,6 +116,17 @@ public class Utils {
             statuses.addAll(criteria.getStatusSet());
         }
         return statuses;
+    }
+
+    public static Set<Severity> extractSeverity(AlertsCriteria criteria) {
+        Set<Severity> severities = new HashSet<>();
+        if (criteria.getSeverity() != null) {
+            severities.add(criteria.getSeverity());
+        }
+        if (!isEmpty(criteria.getSeverities())) {
+            severities.addAll(criteria.getSeverities());
+        }
+        return severities;
     }
 
     public static Set<String> extractCategories(EventsCriteria criteria) {

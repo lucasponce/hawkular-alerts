@@ -29,7 +29,6 @@ import org.hawkular.alerts.api.model.trigger.Trigger;
 import org.hawkular.alerts.api.model.trigger.TriggerAction;
 import org.hawkular.alerts.api.services.ActionsCriteria;
 import org.hawkular.alerts.api.services.AlertsCriteria;
-import org.hawkular.alerts.cache.IspnCacheManager;
 import org.hawkular.alerts.engine.cache.ActionsCacheManager;
 import org.hawkular.alerts.engine.impl.AlertsContext;
 import org.hawkular.commons.log.MsgLogger;
@@ -62,8 +61,6 @@ public class IspnActionsServiceImplTest extends IspnBaseServiceImplTest {
             actions.init();
 
             ActionsCacheManager actionsCacheManager = new ActionsCacheManager();
-            actionsCacheManager.setDefinitions(definitions);
-            actionsCacheManager.setGlobalActionsCache(IspnCacheManager.getCacheManager().getCache("globalActions"));
 
             actions.setActionsCacheManager(actionsCacheManager);
             actions.setAlertsContext(alertsContext);

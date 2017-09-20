@@ -19,10 +19,10 @@
 -->
 <infinispan
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="urn:infinispan:config:9.0 http://www.infinispan.org/schemas/infinispan-config-9.0.xsd"
-    xmlns="urn:infinispan:config:9.0">
+    xsi:schemaLocation="urn:infinispan:config:8.2 http://www.infinispan.org/schemas/infinispan-config-8.2.xsd"
+    xmlns="urn:infinispan:config:8.2">
 
-  <cache-container name="hawkular-alerts">
+  <cache-container name="hawkular-alerts" default-cache="backend">
     <local-cache name="partition"/>
     <local-cache name="triggers"/>
     <local-cache name="data"/>

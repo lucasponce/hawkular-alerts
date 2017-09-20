@@ -39,22 +39,12 @@
 
   <profiles>
     <profile>
-      <id>metrics</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
-      <modules>
-        <module>deployments/hawkular-alerts-rest-metrics</module>
-        <module>deployments/hawkular-alerts-rest-services</module>
-      </modules>
-    </profile>
-
-    <profile>
       <id>standalone</id>
       <activation>
         <activeByDefault>true</activeByDefault>
       </activation>
       <modules>
+        <module>deployments/hawkular-alerts-rest-services</module>
         <module>deployments/hawkular-alerts-rest-standalone</module>
       </modules>
     </profile>
@@ -62,7 +52,7 @@
     <profile>
       <id>openshift</id>
       <modules>
-        <module>deployments/hawkular-alerts-rest-metrics</module>
+        <module>deployments/hawkular-alerts-rest-standalone</module>
       </modules>
     </profile>
   </profiles>
