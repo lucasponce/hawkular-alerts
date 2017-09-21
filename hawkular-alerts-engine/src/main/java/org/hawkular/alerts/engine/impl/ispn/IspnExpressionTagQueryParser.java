@@ -43,7 +43,7 @@ public class IspnExpressionTagQueryParser extends ExpressionTagQueryParser {
     }
 
     public IspnExpressionTagQueryParser(IspnExpressionTagResolver resolver) {
-        super(prefix -> Collections.EMPTY_SET);
+        super(prefix -> Collections.emptySet());
         if (resolver == null) {
             throw new IllegalArgumentException("Resolver must be not null");
         }

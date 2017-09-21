@@ -151,13 +151,6 @@
     </dependency>
 
     <dependency>
-      <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-core</artifactId>
-      <version>${version.org.infinispan.wildfly}</version>
-      <scope>provided</scope>
-    </dependency>
-
-    <dependency>
       <groupId>org.hibernate</groupId>
       <artifactId>hibernate-search-engine</artifactId>
       <version>5.7.0.Final</version>

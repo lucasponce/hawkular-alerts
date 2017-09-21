@@ -31,7 +31,6 @@ import static org.hawkular.alerts.engine.util.Utils.extractTriggerIds;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -42,6 +41,8 @@ import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanQuery;
 import org.hawkular.alerts.api.model.condition.ConditionEval;
 import org.hawkular.alerts.api.model.data.Data;
 import org.hawkular.alerts.api.model.event.Alert;
@@ -116,11 +117,13 @@ public class IspnAlertsServiceImpl implements AlertsService {
                 if (tokens.size() == 1) {
                     // tag
                     tag = tokens.get(0);
-                    query.append("'").append(tag).append("'");
+                    //query.append("'").append(tag).append("'");
+                    query.append(tag);
                 } else if (tokens.size() == 2) {
                     // not tag
                     tag = tokens.get(1);
-                    query.append("not '").append(tag).append("'");
+                    //query.append("not '").append(tag).append("'");
+                    query.append("not ").append(tag);
                 } else {
                     tag = tokens.get(0);
                     String op;
@@ -139,15 +142,18 @@ public class IspnAlertsServiceImpl implements AlertsService {
                             if (isRegexp) {
                                 query.append("/").append(tag).append(TagsBridge.SEPARATOR).append(regexp).append("/");
                             } else {
-                                query.append("'").append(tag).append(TagsBridge.SEPARATOR).append(value).append("'");
+                                //query.append("'").append(tag).append(TagsBridge.SEPARATOR).append(value).append("'");
+                                query.append(tag).append(TagsBridge.SEPARATOR).append(value);
                             }
                         } else if (op.equalsIgnoreCase(NEQ)) {
                             // tag !=
-                            query.append("'").append(tag).append("' and ").append("not ");
+                            //query.append("'").append(tag).append("' and ").append("not ");
+                            query.append(tag).append(" and ").append("not ");
                             if (isRegexp) {
                                 query.append("/").append(tag).append(TagsBridge.SEPARATOR).append(regexp).append("/");
                             } else {
-                                query.append("'").append(tag).append(TagsBridge.SEPARATOR).append(value).append("'");
+                                //query.append("'").append(tag).append(TagsBridge.SEPARATOR).append(value).append("'");
+                                query.append(tag).append(TagsBridge.SEPARATOR).append(value);
                             }
                         } else {
                             // tag in []
@@ -161,7 +167,8 @@ public class IspnAlertsServiceImpl implements AlertsService {
                                 if (isRegexp) {
                                     query.append("/").append(tag).append(TagsBridge.SEPARATOR).append(regexp).append("/");
                                 } else {
-                                    query.append("'").append(tag).append(TagsBridge.SEPARATOR).append(item).append("'");
+                                    //query.append("'").append(tag).append(TagsBridge.SEPARATOR).append(item).append("'");
+                                    query.append(tag).append(TagsBridge.SEPARATOR).append(item);
                                 }
                                 if (i + 1 < values.length) {
                                     query.append(" or ");
@@ -172,7 +179,8 @@ public class IspnAlertsServiceImpl implements AlertsService {
                         // not in array
                         String array = tokens.get(3).substring(1, tokens.get(3).length() - 1);
                         String[] values = array.split(",");
-                        query.append("'").append(tag).append("' and ");
+                        //query.append("'").append(tag).append("' and ");
+                        query.append(tag).append(" and ");
                         for (int i = 0; i < values.length; i++) {
                             String item = values[i];
                             boolean isRegexp = item.startsWith("'");
@@ -182,7 +190,8 @@ public class IspnAlertsServiceImpl implements AlertsService {
                             if (isRegexp) {
                                 query.append("not /").append(tag).append(TagsBridge.SEPARATOR).append(regexp).append("/");
                             } else {
-                                query.append("not '").append(tag).append(TagsBridge.SEPARATOR).append(item).append("'");
+                                //query.append("not '").append(tag).append(TagsBridge.SEPARATOR).append(item).append("'");
+                                query.append("not ").append(tag).append(TagsBridge.SEPARATOR).append(item);
                             }
                             query.append(")");
                             if (i + 1 < values.length) {
@@ -274,6 +283,16 @@ public class IspnAlertsServiceImpl implements AlertsService {
         Page<Alert> existingAlerts = getAlerts(tenantId, criteria, null);
 
         for (Alert alert : existingAlerts) {
+            System.out.println(String.format("Tagging %s with %s", alert.getAlertId(), tags));
+            tags.entrySet().stream().forEach(tag -> alert.addTag(tag.getKey(), tag.getValue()));
+            backend.put(pk(alert), new IspnEvent(alert));
+        }
+
+        // TODO REMOVE
+        existingAlerts = getAlerts(tenantId, criteria, null);
+
+        for (Alert alert : existingAlerts) {
+            System.out.println(String.format("Tagged Alert %s : %s", alert.getAlertId(), alert.getTags()));
             tags.entrySet().stream().forEach(tag -> alert.addTag(tag.getKey(), tag.getValue()));
             backend.put(pk(alert), new IspnEvent(alert));
         }
@@ -436,27 +455,37 @@ public class IspnAlertsServiceImpl implements AlertsService {
 
         bj.must(hqb.keyword().onField("eventType").matching("ALERT").createQuery());
 
-        System.out.println("TENANTS '" + String.join(" ", tenantIds) + "'");
-        bj.must(hqb.keyword().onField("tenantId").matching(String.join(" ", tenantIds)).createQuery());
-        //for (String s : tenantIds) {
-        //    bj.should(hqb.keyword().onField("tenantId").matching(s).createQuery());
-        //}
+        BooleanQuery bq = new BooleanQuery(true);
+        for (String s : tenantIds) {
+            bq.add(hqb.keyword().onField("tenantId").matching(s).createQuery(), BooleanClause.Occur.SHOULD);
+        }
+        bj.must(bq);
 
         if (filter) {
-           if (criteria.hasAlertIdCriteria()) {
+            if (criteria.hasAlertIdCriteria()) {
                 Set<String> alertIds = extractAlertIds(criteria);
-                bj.must(hqb.keyword().onField("id").matching(String.join(" ", alertIds)).createQuery());
-           }
-           if (criteria.hasTagQueryCriteria()) {
+                bq = new BooleanQuery(true);
+                for (String s : alertIds) {
+                    bq.add(hqb.keyword().onField("id").matching(s).createQuery(), BooleanClause.Occur.SHOULD);
+                }
+                bj.must(bq);
+            }
+            if (criteria.hasTagQueryCriteria()) {
                 StringBuilder sb = new StringBuilder();
                 parseTagQuery(criteria.getTagQuery(), sb);
-                bj.must(hqb.keyword().onField("tags").matching(sb.toString()).createQuery());
-           }
-           if (criteria.hasTriggerIdCriteria()) {
+                System.out.println(String.format("TAG QUERY |%s|", sb.toString()));
+                System.out.println(String.format("TAG QUERY |%s|", sb.toString().replace("'", "")));
+                bj.must(hqb.keyword().onField("tags").matching(sb.toString().replace("'", "")).createQuery());
+            }
+            if (criteria.hasTriggerIdCriteria()) {
                 Set<String> triggerIds = extractTriggerIds(criteria);
-                bj.must(hqb.keyword().onField("triggerId").matching(String.join(" ", triggerIds)).createQuery());
-           }
-           if (criteria.hasCTimeCriteria()) {
+                bq = new BooleanQuery(true);
+                for (String s : triggerIds) {
+                    bq.add(hqb.keyword().onField("triggerId").matching(s).createQuery(), BooleanClause.Occur.SHOULD);
+                }
+                bj.must(bq);
+            }
+            if (criteria.hasCTimeCriteria()) {
                 if (criteria.getStartTime() != null && criteria.getEndTime() != null) {
                     bj.must(hqb.range().onField("ctime").from(criteria.getStartTime()).to(criteria.getEndTime())
                             .createQuery());
@@ -465,8 +494,8 @@ public class IspnAlertsServiceImpl implements AlertsService {
                 } else if (criteria.getEndTime() != null) {
                     bj.must(hqb.range().onField("ctime").below(criteria.getEndTime()).createQuery());
                 }
-           }
-           if (criteria.hasResolvedTimeCriteria()) {
+            }
+            if (criteria.hasResolvedTimeCriteria()) {
                 bj.must(hqb.keyword().onField("status").matching(Status.RESOLVED.name()).createQuery());
                 if (criteria.getStartResolvedTime() != null && criteria.getEndResolvedTime() != null) {
                     bj.must(hqb.range().onField("stime").from(criteria.getStartResolvedTime())
@@ -476,9 +505,9 @@ public class IspnAlertsServiceImpl implements AlertsService {
                     bj.must(hqb.range().onField("stime").above(criteria.getStartResolvedTime()).createQuery());
                 } else if (criteria.getEndResolvedTime() != null) {
                     bj.must(hqb.range().onField("stime").below(criteria.getEndResolvedTime()).createQuery());
-               }
-           }
-           if (criteria.hasAckTimeCriteria()) {
+                }
+            }
+            if (criteria.hasAckTimeCriteria()) {
                 bj.must(hqb.keyword().onField("status").matching(Status.ACKNOWLEDGED.name()).createQuery());
                 if (criteria.getStartAckTime() != null && criteria.getEndAckTime() != null) {
                     bj.must(hqb.range().onField("stime").from(criteria.getStartAckTime()).to(criteria.getEndAckTime())
@@ -487,9 +516,9 @@ public class IspnAlertsServiceImpl implements AlertsService {
                     bj.must(hqb.range().onField("stime").above(criteria.getStartAckTime()).createQuery());
                 } else if (criteria.getEndAckTime() != null) {
                     bj.must(hqb.range().onField("stime").below(criteria.getEndAckTime()).createQuery());
-               }
-           }
-           if (criteria.hasStatusTimeCriteria()) {
+                }
+            }
+            if (criteria.hasStatusTimeCriteria()) {
                 if (criteria.getStartAckTime() != null && criteria.getEndAckTime() != null) {
                     bj.must(hqb.range().onField("stime").from(criteria.getStartStatusTime())
                             .to(criteria.getEndStatusTime()).createQuery());
@@ -497,19 +526,25 @@ public class IspnAlertsServiceImpl implements AlertsService {
                     bj.must(hqb.range().onField("stime").above(criteria.getStartStatusTime()).createQuery());
                 } else if (criteria.getEndStatusTime() != null) {
                     bj.must(hqb.range().onField("stime").below(criteria.getEndStatusTime()).createQuery());
-               }
-           }
-           if (criteria.hasSeverityCriteria()) {
-               Set<String> severityNames = extractSeverity(criteria).stream().
-                       map(s -> s.name())
-                       .collect(Collectors.toSet());
-               bj.must(hqb.keyword().onField("severity").matching(String.join(" ", severityNames)).createQuery());
-           }
-           if (criteria.hasStatusCriteria()) {
-               Set<String> statusNames = extractStatus(criteria).stream().
-                       map(s -> s.name())
-                       .collect(Collectors.toSet());
-               bj.must(hqb.keyword().onField("status").matching(String.join(" ", statusNames)).createQuery());
+                }
+            }
+            if (criteria.hasSeverityCriteria()) {
+                Set<String> severityNames = extractSeverity(criteria).stream().map(s -> s.name())
+                        .collect(Collectors.toSet());
+                bq = new BooleanQuery(true);
+                for (String s : severityNames) {
+                    bq.add(hqb.keyword().onField("severity").matching(s).createQuery(), BooleanClause.Occur.SHOULD);
+                }
+                bj.must(bq);
+            }
+            if (criteria.hasStatusCriteria()) {
+                Set<String> statusNames = extractStatus(criteria).stream().map(s -> s.name())
+                        .collect(Collectors.toSet());
+                bq = new BooleanQuery(true);
+                for (String s : statusNames) {
+                    bq.add(hqb.keyword().onField("status").matching(s).createQuery(), BooleanClause.Occur.SHOULD);
+                }
+                bj.must(bq);
             }
         }
 
@@ -561,85 +596,67 @@ public class IspnAlertsServiceImpl implements AlertsService {
             log.debugf("getEvents criteria: %s", criteria.toString());
         }
 
-        StringBuilder query = new StringBuilder("from org.hawkular.alerts.engine.impl.ispn.model.IspnEvent where ");
-        query.append("(");
-        Iterator<String> iter = tenantIds.iterator();
-        while (iter.hasNext()) {
-            String tenantId = iter.next();
-            query.append("tenantId = '").append(tenantId).append("' ");
-            if (iter.hasNext()) {
-                query.append("or ");
-            }
+        QueryBuilder hqb = Search.getSearchManager(backend).buildQueryBuilderForClass(IspnEvent.class).get();
+        BooleanJunction<?> bj = hqb.bool();
+
+        BooleanQuery bq = new BooleanQuery(true);
+        for (String s : tenantIds) {
+            bq.add(hqb.keyword().onField("tenantId").matching(s).createQuery(), BooleanClause.Occur.SHOULD);
         }
-        query.append(") ");
+        bj.must(bq);
 
         if (filter) {
             if (criteria.hasEventTypeCriteria()) {
                 try {
                     EventType eventType = EventType.valueOf(criteria.getEventType());
-                    query.append("and eventType = '").append(eventType.name()).append("' ");
+                    bj.must(hqb.keyword().onField("eventType").matching(eventType.name()).createQuery());
                 } catch (Exception e) {
                     log.debugf("EventType [%s] is not valid, ignoring this criteria", criteria.getEventType());
                 }
             }
             if (criteria.hasEventIdCriteria()) {
-                query.append("and (");
-                iter = extractEventIds(criteria).iterator();
-                while (iter.hasNext()) {
-                    String eventId = iter.next();
-                    query.append("id = '").append(eventId).append("' ");
-                    if (iter.hasNext()) {
-                        query.append("or ");
-                    }
+                Set<String> alertIds = extractEventIds(criteria);
+                bq = new BooleanQuery(true);
+                for (String s : alertIds) {
+                    bq.add(hqb.keyword().onField("id").matching(s).createQuery(), BooleanClause.Occur.SHOULD);
                 }
-                query.append(") ");
+                bj.must(bq);
             }
             if (criteria.hasTagQueryCriteria()) {
-                query.append("and (tags : ");
-                parseTagQuery(criteria.getTagQuery(), query);
-                query.append(") ");
+                StringBuilder sb = new StringBuilder();
+                parseTagQuery(criteria.getTagQuery(), sb);
+                bj.must(hqb.keyword().onField("tags").matching(sb.toString().replace("'", "")).createQuery());
             }
             if (criteria.hasTriggerIdCriteria()) {
-                query.append("and (");
-                iter = extractTriggerIds(criteria).iterator();
-                while (iter.hasNext()) {
-                    String triggerId = iter.next();
-                    query.append("triggerId = '").append(triggerId).append("' ");
-                    if (iter.hasNext()) {
-                        query.append("or ");
-                    }
+                Set<String> triggerIds = extractTriggerIds(criteria);
+                bq = new BooleanQuery(true);
+                for (String s : triggerIds) {
+                    bq.add(hqb.keyword().onField("triggerId").matching(s).createQuery(), BooleanClause.Occur.SHOULD);
                 }
-                query.append(") ");
+                bj.must(bq);
             }
             if (criteria.hasCTimeCriteria()) {
-                query.append("and (");
-                if (criteria.getStartTime() != null) {
-                    query.append("ctime >= ").append(criteria.getStartTime()).append(" ");
+                if (criteria.getStartTime() != null && criteria.getEndTime() != null) {
+                    bj.must(hqb.range().onField("ctime").from(criteria.getStartTime()).to(criteria.getEndTime())
+                            .createQuery());
+                } else if (criteria.getStartTime() != null) {
+                    bj.must(hqb.range().onField("ctime").above(criteria.getStartTime()).createQuery());
+                } else if (criteria.getEndTime() != null) {
+                    bj.must(hqb.range().onField("ctime").below(criteria.getEndTime()).createQuery());
                 }
-                if (criteria.getEndTime() != null) {
-                    if (criteria.getStartTime() != null) {
-                        query.append("and ");
-                    }
-                    query.append("ctime <= ").append(criteria.getEndTime()).append(" ");
-                }
-                query.append(") ");
             }
             if (criteria.hasCategoryCriteria()) {
-                query.append("and (");
-                iter = extractCategories(criteria).iterator();
-                while (iter.hasNext()) {
-                    String category = iter.next();
-                    query.append("category = '").append(category).append("' ");
-                    if (iter.hasNext()) {
-                        query.append(" or ");
-                    }
+                Set<String> categories = extractCategories(criteria);
+                bq = new BooleanQuery(true);
+                for (String s : categories) {
+                    bq.add(hqb.keyword().onField("category").matching(s).createQuery(), BooleanClause.Occur.SHOULD);
                 }
-                query.append(") ");
+                bj.must(bq);
             }
         }
 
-        //TODO List<IspnEvent> ispnEvents = queryFactory.create(query.toString()).list();
-        List<IspnEvent> ispnEvents = Collections.emptyList();
+        CacheQuery<IspnEvent> cacheQuery = Search.getSearchManager(backend).getQuery(bj.createQuery());
+        List<IspnEvent> ispnEvents = cacheQuery.list();
         List<Event> events = ispnEvents.stream().map(e -> e.getEvent()).collect(Collectors.toList());
         if (events.isEmpty()) {
             return new Page<>(events, pager, 0);

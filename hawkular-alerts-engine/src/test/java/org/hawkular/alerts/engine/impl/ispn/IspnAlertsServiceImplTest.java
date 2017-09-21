@@ -84,7 +84,7 @@ public class IspnAlertsServiceImplTest extends IspnBaseServiceImplTest {
         deleteTestAlerts(numTenants);
     }
 
-    //@Test
+    @Test
     public void evaluateTagQuery() throws Exception {
         StringBuilder query = new StringBuilder();
 
@@ -363,7 +363,7 @@ public class IspnAlertsServiceImplTest extends IspnBaseServiceImplTest {
         deleteTestAlerts(numTenants);
     }
 
-    //@Test
+    @Test
     public void queryAlertsByAcknowledgedTime() throws Exception {
         int numTenants = 1;
         int numTriggers = 5;
@@ -383,7 +383,7 @@ public class IspnAlertsServiceImplTest extends IspnBaseServiceImplTest {
         deleteTestAlerts(numTenants);
     }
 
-    //@Test
+    @Test
     public void queryAlertsByStatusTime() throws Exception {
         int numTenants = 1;
         int numTriggers = 5;
@@ -403,7 +403,7 @@ public class IspnAlertsServiceImplTest extends IspnBaseServiceImplTest {
         deleteTestAlerts(numTenants);
     }
 
-    //@Test
+    @Test
     public void queryAlertsBySeverity() throws Exception {
         int numTenants = 1;
         int numTriggers = 5;
@@ -437,7 +437,7 @@ public class IspnAlertsServiceImplTest extends IspnBaseServiceImplTest {
         deleteTestAlerts(numTenants);
     }
 
-    //@Test
+    @Test
     public void queryAlertsByStatus() throws Exception {
         int numTenants = 1;
         int numTriggers = 5;
@@ -468,7 +468,7 @@ public class IspnAlertsServiceImplTest extends IspnBaseServiceImplTest {
         deleteTestAlerts(numTenants);
     }
 
-    //@Test
+    @Test
     public void queryAlertsCombined() throws Exception {
         int numTenants = 1;
         int numTriggers = 5;
@@ -489,7 +489,7 @@ public class IspnAlertsServiceImplTest extends IspnBaseServiceImplTest {
         deleteTestAlerts(numTenants);
     }
 
-    //@Test
+    @Test
     public void ackAlert() throws Exception {
         int numTenants = 1;
         int numTriggers = 1;
@@ -514,7 +514,7 @@ public class IspnAlertsServiceImplTest extends IspnBaseServiceImplTest {
         deleteTestAlerts(numTenants);
     }
 
-    //@Test
+    @Test
     public void addNote() throws Exception {
         int numTenants = 1;
         int numTriggers = 1;
@@ -542,7 +542,7 @@ public class IspnAlertsServiceImplTest extends IspnBaseServiceImplTest {
         deleteTestAlerts(numTenants);
     }
 
-    //@Test
+    @Test
     public void resolveAlert() throws Exception {
         int numTenants = 1;
         int numTriggers = 1;
@@ -567,7 +567,7 @@ public class IspnAlertsServiceImplTest extends IspnBaseServiceImplTest {
         deleteTestAlerts(numTenants);
     }
 
-    //@Test
+    @Test
     public void resolveAlertForTrigger() throws Exception {
         int numTenants = 1;
         int numTriggers = 1;
@@ -585,7 +585,7 @@ public class IspnAlertsServiceImplTest extends IspnBaseServiceImplTest {
         deleteTestAlerts(numTenants);
     }
 
-    //@Test
+    @Test
     public void addRemoveAlertTag() throws Exception {
         int numTenants = 1;
         int numTriggers = 1;
@@ -615,7 +615,7 @@ public class IspnAlertsServiceImplTest extends IspnBaseServiceImplTest {
         deleteTestAlerts(numTenants);
     }
 
-    //@Test
+    @Test
     public void addEvents() throws Exception {
         int numTenants = 2;
         int numTriggers = 5;
@@ -648,7 +648,7 @@ public class IspnAlertsServiceImplTest extends IspnBaseServiceImplTest {
         deleteTestEvents(numTenants);
     }
 
-    //@Test
+    @Test
     public void queryEventsByTriggerId() throws Exception {
         int numTenants = 2;
         int numTriggers = 5;
@@ -750,7 +750,7 @@ public class IspnAlertsServiceImplTest extends IspnBaseServiceImplTest {
         deleteTestEvents(numTenants);
     }
 
-    //@Test
+    @Test
     public void queryEventsByCTime() throws Exception {
         int numTenants = 1;
         int numTriggers = 5;
@@ -774,7 +774,7 @@ public class IspnAlertsServiceImplTest extends IspnBaseServiceImplTest {
         deleteTestEvents(numTenants);
     }
 
-    //@Test
+    @Test
     public void queryEventsByCategory() throws Exception {
         int numTenants = 1;
         int numTriggers = 5;
@@ -797,7 +797,7 @@ public class IspnAlertsServiceImplTest extends IspnBaseServiceImplTest {
         deleteTestEvents(numTenants);
     }
 
-    //@Test
+    @Test
     public void addRemoveEventTag() throws Exception {
         int numTenants = 1;
         int numTriggers = 1;
@@ -827,7 +827,7 @@ public class IspnAlertsServiceImplTest extends IspnBaseServiceImplTest {
         deleteTestEvents(numTenants);
     }
 
-    //@Test
+    @Test
     public void combinedEventsAlerts() throws Exception {
         int numTenants = 1;
         int numTriggers = 1;
