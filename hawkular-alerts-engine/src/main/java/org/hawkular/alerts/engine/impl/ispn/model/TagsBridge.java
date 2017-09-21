@@ -102,7 +102,6 @@ public class TagsBridge implements FieldBridge, ContainerBridge, StringBridge {
 
         @Override
         protected TokenStreamComponents createComponents(String fieldName) {
-            System.out.println("In Analyzer");
             return new TokenStreamComponents(new TagsTokenizer());
         }
 

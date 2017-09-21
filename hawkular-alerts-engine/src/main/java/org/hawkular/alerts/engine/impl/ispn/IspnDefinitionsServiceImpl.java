@@ -31,12 +31,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.ejb.EJB;
 import javax.ejb.Local;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -104,10 +106,13 @@ public class IspnDefinitionsServiceImpl implements DefinitionsService {
     private final MsgLogger msgLog = MsgLogger.LOGGER;
     private final Logger log = Logger.getLogger(IspnDefinitionsServiceImpl.class);
 
+    @EJB
     AlertsEngine alertsEngine;
 
+    @EJB
     AlertsContext alertsContext;
 
+    @EJB
     PropertiesService properties;
 
     Cache<String, Object> backend;
@@ -429,7 +434,7 @@ public class IspnDefinitionsServiceImpl implements DefinitionsService {
         }
     }
 
-    // TODO @Override
+    @Override
     public void updateFullTrigger(String tenantId, FullTrigger fullTrigger) throws Exception {
         if (null == fullTrigger) {
             throw new IllegalArgumentException("FullTrigger must be not null");
@@ -731,42 +736,50 @@ public class IspnDefinitionsServiceImpl implements DefinitionsService {
 
         List<IspnTrigger> triggers;
         if (filter) {
-            FilterConditionContext qb = queryFactory.from(IspnTrigger.class)
-                    .having("tenantId")
-                    .eq(tenantId);
+            StringBuilder query = new StringBuilder(
+                    "from org.hawkular.alerts.engine.impl.ispn.model.IspnTrigger where ");
+            query.append("tenantId = '").append(tenantId).append("' and ");
             if (criteria.hasTriggerIdCriteria()) {
                 Set<String> triggerIds = filterByTriggers(criteria);
-                System.out.println("Here! " + triggerIds);
-                // note: IN clause works only on set size > 1 (as of this writing)
-                if (1 == triggerIds.size()) {
-                    qb.and().having("triggerId").eq(triggerIds.iterator().next());
-                } else {
-                    qb.and().having("triggerId").in(triggerIds);
+                query.append("(");
+                Iterator<String> iter = triggerIds.iterator();
+                while (iter.hasNext()) {
+                    String triggerId = iter.next();
+                    query.append("triggerId = '").append(triggerId).append("' ");
+                    if (iter.hasNext()) {
+                        query.append("or ");
+                    }
+                }
+                query.append(") ");
+                if (criteria.hasTagCriteria()) {
+                    query.append("and ");
                 }
             }
             if (criteria.hasTagCriteria()) {
                 Map<String, String> tags = criteria.getTags();
-                FilterConditionContext fcc = null;
-                for (Map.Entry<String, String> tag : tags.entrySet()) {
-                    String expr = String.format("%s%s%s", tag.getKey(), TagsBridge.VALUE,
-                            (tag.getValue().equals("*") ? "%" : tag.getValue()));
-                    if (null == fcc) {
-                        fcc = queryFactory.having("tags").like(expr);
-                    } else {
-                        fcc.or().having("tags").like(expr);
+                query.append("(");
+                Iterator<Map.Entry<String, String>> iter = tags.entrySet().iterator();
+                while (iter.hasNext()) {
+                    Map.Entry<String, String> tag = iter.next();
+                    query.append("tags like '")
+                            .append(tag.getKey())
+                            .append(TagsBridge.VALUE)
+                            .append(tag.getValue().equals("*") ? "%" : tag.getValue())
+                            .append("' ");
+                    if (iter.hasNext()) {
+                        query.append("or ");
                     }
                 }
-                qb.and(fcc);
+                query.append(") ");
             }
-            triggers = qb.toBuilder().build().list();
+            triggers = queryFactory.create(query.toString()).list();
         } else {
             triggers = queryFactory.from(IspnTrigger.class)
                     .having("tenantId")
                     .eq(tenantId)
-                    .toBuilder().build()
+                    .build()
                     .list();
         }
-        triggers.stream().forEach(t -> System.out.println(t.getTriggerId()));
         return prepareTriggersPage(triggers.stream().map(t -> t.getTrigger()).collect(Collectors.toList()), pager);
     }
 
@@ -776,7 +789,7 @@ public class IspnDefinitionsServiceImpl implements DefinitionsService {
         Collection<IspnTrigger> ispnTriggers = queryFactory.from(IspnTrigger.class)
                 .having("tenantId").eq(tenantId).and()
                 .having("memberOf").eq(groupId)
-                .toBuilder().build()
+                .build()
                 .list();
         return ispnTriggers.stream()
                 .map(t -> t.getTrigger())
@@ -800,10 +813,13 @@ public class IspnDefinitionsServiceImpl implements DefinitionsService {
         if (isEmpty(value)) {
             throw new IllegalArgumentException("value must be not null (use '*' for all");
         }
-        String expr = String.format("%s%s%s", name, TagsBridge.VALUE, (value.equals("*") ? "%" : value));
-        QueryBuilder qb = queryFactory.from(IspnTrigger.class).having("tags").like(expr);
-
-        List<IspnTrigger> triggers = qb.build().list();
+        StringBuilder query = new StringBuilder(
+                "from org.hawkular.alerts.engine.impl.ispn.model.IspnTrigger where tags like '")
+                        .append(name)
+                        .append(TagsBridge.VALUE)
+                        .append(value.equals("*") ? "%" : value)
+                        .append("'");
+        List<IspnTrigger> triggers = queryFactory.create(query.toString()).list();
         return triggers.stream().map(t -> t.getTrigger()).collect(Collectors.toList());
     }
 
@@ -1087,7 +1103,7 @@ public class IspnDefinitionsServiceImpl implements DefinitionsService {
     public Collection<Dampening> getDampenings(String tenantId) throws Exception {
         return mapDampenings(queryFactory.from(IspnDampening.class)
                 .having("tenantId").eq(tenantId)
-                .toBuilder().build()
+                .build()
                 .list());
     }
 
@@ -1100,7 +1116,7 @@ public class IspnDefinitionsServiceImpl implements DefinitionsService {
         if (null != triggerMode) {
             qb = qb.and().having("triggerMode").eq(triggerMode.name());
         }
-        return mapDampenings(qb.toBuilder().build().list());
+        return mapDampenings(((QueryBuilder) qb).build().list());
     }
 
     @Override
@@ -1336,7 +1352,7 @@ public class IspnDefinitionsServiceImpl implements DefinitionsService {
     public Collection<Condition> getConditions(String tenantId) throws Exception {
         return mapConditions(queryFactory.from(IspnCondition.class)
                 .having("tenantId").eq(tenantId)
-                .toBuilder().build()
+                .build()
                 .list());
     }
 
@@ -1349,7 +1365,7 @@ public class IspnDefinitionsServiceImpl implements DefinitionsService {
         if (null != triggerMode) {
             qb = qb.and().having("triggerMode").eq(triggerMode.name());
         }
-        return mapConditions(qb.toBuilder().build().list());
+        return mapConditions(((QueryBuilder) qb).build().list());
     }
 
     @Override
@@ -1528,7 +1544,7 @@ public class IspnDefinitionsServiceImpl implements DefinitionsService {
         List<IspnActionDefinition> actionDefinitions = queryFactory.from(IspnActionDefinition.class)
                 .having("tenantId")
                 .eq(tenantId)
-                .toBuilder().build()
+                .build()
                 .list();
         for (IspnActionDefinition action : actionDefinitions) {
             String actionPlugin = action.getActionPlugin();
@@ -1550,7 +1566,7 @@ public class IspnDefinitionsServiceImpl implements DefinitionsService {
                 .and()
                 .having("actionPlugin")
                 .eq(actionPlugin)
-                .toBuilder().build()
+                .build()
                 .list();
         for (IspnActionDefinition action : actionDefinitions) {
             actionIds.add(action.getActionId());
@@ -2020,7 +2036,7 @@ public class IspnDefinitionsServiceImpl implements DefinitionsService {
         return dampening;
     }
 
-    //TODO @Override
+    @Override
     public void createFullTrigger(String tenantId, FullTrigger fullTrigger) throws Exception {
         if (null == fullTrigger) {
             throw new IllegalArgumentException("FullTrigger must be not null");
@@ -2066,7 +2082,7 @@ public class IspnDefinitionsServiceImpl implements DefinitionsService {
         }
     }
 
-    // TODO @Override
+    @Override
     public FullTrigger getFullTrigger(String tenantId, String triggerId) throws Exception {
         if (isEmpty(tenantId)) {
             throw new IllegalArgumentException("TenantId must be not null");
@@ -2137,7 +2153,7 @@ public class IspnDefinitionsServiceImpl implements DefinitionsService {
         List<IspnActionDefinition> actionDefinitions = queryFactory.from(IspnActionDefinition.class)
                 .having("tenantId")
                 .eq(tenantId)
-                .toBuilder().build()
+                .build()
                 .list();
         return actionDefinitions.stream().map(a -> a.getActionDefinition()).collect(Collectors.toList());
     }
@@ -2373,11 +2389,5 @@ public class IspnDefinitionsServiceImpl implements DefinitionsService {
         return ispnDampenings.stream()
                 .map(d -> d.getDampening())
                 .collect(Collectors.toList());
-    }
-
-    @Override
-    public Condition getCondition(String arg0, String arg1) throws Exception {
-        // TODO Auto-generated method stub
-        return null;
     }
 }

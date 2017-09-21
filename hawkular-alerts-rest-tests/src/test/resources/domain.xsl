@@ -79,12 +79,6 @@
 
   <xsl:template match="node()[name(.)='server-groups']">
     <server-groups>
-      <server-group name="cassandra-group" profile="default" >
-        <jvm name="default">
-          <heap size="64m" max-size="512m"/>
-        </jvm>
-        <socket-binding-group ref="standard-sockets"/>
-      </server-group>
       <server-group name="hawkular-alerts-group" profile="ha" >
         <jvm name="default">
           <heap size="64m" max-size="512m"/>

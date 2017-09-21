@@ -21,7 +21,6 @@
 
   <deployment>
     <dependencies>
-      <module name="org.infinispan" export="true" />
     </dependencies>
   </deployment>
 

@@ -217,7 +217,7 @@ public class IspnAlertsServiceImplTest extends IspnBaseServiceImplTest {
         assertEquals("((('tagA') and (not 'tagB')) and (('tagD') or (not 'tagC')))", query.toString().trim());
     }
 
-    //@Test
+    @Test
     public void addAlertTagsTest() throws Exception {
         int numTenants = 2;
         int numTriggers = 5;
@@ -295,7 +295,7 @@ public class IspnAlertsServiceImplTest extends IspnBaseServiceImplTest {
         deleteTestAlerts(numTenants);
     }
 
-    //@Test
+    @Test
     public void queryAlertsByTriggerId() throws Exception {
         int numTenants = 2;
         int numTriggers = 5;
@@ -319,7 +319,7 @@ public class IspnAlertsServiceImplTest extends IspnBaseServiceImplTest {
         deleteTestAlerts(numTenants);
     }
 
-    //@Test
+    @Test
     public void queryAlertsByCTime() throws Exception {
         int numTenants = 1;
         int numTriggers = 5;
@@ -343,7 +343,7 @@ public class IspnAlertsServiceImplTest extends IspnBaseServiceImplTest {
         deleteTestAlerts(numTenants);
     }
 
-    //@Test
+    @Test
     public void queryAlertsByResolvedTime() throws Exception {
         int numTenants = 1;
         int numTriggers = 5;
@@ -672,7 +672,7 @@ public class IspnAlertsServiceImplTest extends IspnBaseServiceImplTest {
         deleteTestEvents(numTenants);
     }
 
-    //@Test
+    @Test
     public void addEventsTagsTest() throws Exception {
         int numTenants = 2;
         int numTriggers = 5;
@@ -852,7 +852,7 @@ public class IspnAlertsServiceImplTest extends IspnBaseServiceImplTest {
         deleteTestAlerts(numTenants);
     }
 
-    //@Test
+    @Test
     public void alertTagWithDots() throws Exception {
         int numTenants = 1;
         int numTriggers = 1;
@@ -880,7 +880,7 @@ public class IspnAlertsServiceImplTest extends IspnBaseServiceImplTest {
         deleteTestAlerts(numTenants);
     }
 
-    //@Test
+    @Test
     public void eventTagWithDots() throws Exception {
         int numTenants = 1;
         int numTriggers = 1;

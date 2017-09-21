@@ -34,10 +34,6 @@
   <!-- add system properties -->
   <xsl:template name="system-properties">
     <system-properties>
-      <property>
-        <xsl:attribute name="name">hawkular.backend</xsl:attribute>
-        <xsl:attribute name="value">&#36;{hawkular.backend:embedded_cassandra}</xsl:attribute>
-      </property>
     </system-properties>
   </xsl:template>
 
