@@ -150,13 +150,6 @@
     </dependency>
 
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-simple</artifactId>
-      <version>${version.org.slf4j}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
       <groupId>log4j</groupId>
       <artifactId>log4j</artifactId>
       <scope>test</scope>
@@ -369,6 +362,7 @@
                       <outputDirectory>${project.build.directory}/${project.build.finalName}/modules/system/layers/hawkular/org/hawkular/nest/main/deployments</outputDirectory>
                       <destFileName>hawkular-alerts-actions-email.war</destFileName>
                     </artifactItem>
+                    <!--
                     <artifactItem>
                       <groupId>org.hawkular.alerts</groupId>
                       <artifactId>hawkular-alerts-actions-file-standalone</artifactId>
@@ -377,6 +371,7 @@
                       <outputDirectory>${project.build.directory}/${project.build.finalName}/modules/system/layers/hawkular/org/hawkular/nest/main/deployments</outputDirectory>
                       <destFileName>hawkular-alerts-actions-file.war</destFileName>
                     </artifactItem>
+                -->
                   </artifactItems>
                 </configuration>
               </execution>
@@ -850,6 +845,7 @@
                       <outputDirectory>${hawkular.deployments}</outputDirectory>
                       <destFileName>hawkular-alerts.war</destFileName>
                     </artifactItem>
+                    <!--
                     <artifactItem>
                       <groupId>org.hawkular.alerts</groupId>
                       <artifactId>hawkular-alerts-actions-elasticsearch-standalone</artifactId>
@@ -906,6 +902,7 @@
                       <outputDirectory>${hawkular.deployments}</outputDirectory>
                       <destFileName>hawkular-prometheus-alerter.war</destFileName>
                     </artifactItem>
+                    -->
                   </artifactItems>
                 </configuration>
               </execution>

@@ -38,6 +38,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.Local;
 import javax.ejb.Stateless;
@@ -122,6 +123,7 @@ public class IspnDefinitionsServiceImpl implements DefinitionsService {
     private List<DefinitionsEvent> deferredNotifications = new ArrayList<>();
     private int deferNotificationsCount = 0;
 
+    @PostConstruct
     public void init() {
         backend = IspnCacheManager.getCacheManager().getCache("backend");
         if (backend == null) {

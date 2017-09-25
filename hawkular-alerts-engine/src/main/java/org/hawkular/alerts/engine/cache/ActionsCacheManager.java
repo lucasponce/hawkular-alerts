@@ -26,7 +26,6 @@ import java.util.Collection;
 import java.util.List;
 
 import javax.annotation.PostConstruct;
-import javax.annotation.Resource;
 import javax.ejb.EJB;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
@@ -35,6 +34,7 @@ import javax.ejb.TransactionAttributeType;
 
 import org.hawkular.alerts.api.model.action.ActionDefinition;
 import org.hawkular.alerts.api.services.DefinitionsService;
+import org.hawkular.alerts.cache.IspnCacheManager;
 import org.hawkular.alerts.engine.log.MsgLogger;
 import org.infinispan.Cache;
 import org.jboss.logging.Logger;
@@ -55,12 +55,13 @@ public class ActionsCacheManager {
     @EJB
     DefinitionsService definitions;
 
-    @Resource(lookup = "java:jboss/infinispan/cache/hawkular-alerts/globalActions")
     private Cache<ActionKey, ActionDefinition> globalActionsCache;
 
     @PostConstruct
     public void init() {
         msgLog.infoInitActionsCache();
+
+        globalActionsCache = IspnCacheManager.getCacheManager().getCache("globalActions");
 
         globalActionsCache.clear();
 

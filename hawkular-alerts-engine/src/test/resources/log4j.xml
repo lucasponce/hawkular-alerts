@@ -33,7 +33,7 @@
 
     <param name="file" value="${testOutput}/tmp/testReport.out"/>
     <param name="immediateFlush" value="true"/>
-    <param name="threshold" value="TRACE"/>
+    <param name="threshold" value="INFO"/>
     <param name="append" value="false"/>
 
     <layout class="org.apache.log4j.PatternLayout">
@@ -46,7 +46,5 @@
     <appender-ref ref="console" />
     <appender-ref ref="file" />
   </root>
-
-  <logger name="org.infinispan.query.dsl.embedded.impl.EmbeddedQueryBuilder" level="TRACE" />
 
 </log4j:configuration>

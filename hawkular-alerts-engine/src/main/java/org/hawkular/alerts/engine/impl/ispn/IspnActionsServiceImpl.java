@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.Local;
 import javax.ejb.Stateless;
@@ -87,6 +88,7 @@ public class IspnActionsServiceImpl implements ActionsService {
 
     QueryFactory queryFactory;
 
+    @PostConstruct
     public void init() {
         backend = IspnCacheManager.getCacheManager().getCache("backend");
         if (backend == null) {
@@ -116,16 +118,13 @@ public class IspnActionsServiceImpl implements ActionsService {
 
         if (!isEmpty(trigger.getActions())) {
             for (TriggerAction triggerAction : trigger.getActions()) {
-                System.out.println(String.format("Sending %s %s", triggerAction, event));
                 send(triggerAction, event);
             }
         }
 
-        System.out.println(String.format("hasGlobalActions=%s", actionsCacheManager.hasGlobalActions()));
         if (actionsCacheManager.hasGlobalActions()) {
             Collection<ActionDefinition> globalActions = actionsCacheManager.getGlobalActions(trigger.getTenantId());
             for (ActionDefinition globalAction : globalActions) {
-                System.out.println(String.format("Sending global %s %s", globalAction, event));
                 send(globalAction, event);
             }
         }
@@ -228,8 +227,7 @@ public class IspnActionsServiceImpl implements ActionsService {
             }
         }
 
-        // List<IspnAction> ispnActions = queryFactory.create(query.toString()).list();
-        List<IspnAction> ispnActions = Collections.emptyList();
+        List<IspnAction> ispnActions = queryFactory.create(query.toString()).list();
         return prepareActionsPage(ispnActions.stream().map(ispnAction -> {
             if (criteria != null && criteria.isThin()) {
                 Action action = new Action(ispnAction.getAction());
@@ -345,13 +343,13 @@ public class IspnActionsServiceImpl implements ActionsService {
                         defaultProperties);
                 action.setProperties(mixedProps);
             } else {
-                log.warnf("Action %s has not an ActionDefinition", action);
+                log.debugf("Action %s has not an ActionDefinition", action);
             }
             //  If no constraints defined at TriggerAction level, ActionDefinition constraints are used.
             if (isEmpty(triggerAction.getStates()) && triggerAction.getCalendar() == null) {
                 triggerAction.setStates(actionDefinition.getStates());
                 triggerAction.setCalendar(actionDefinition.getCalendar());
-                log.warnf("Using ActionDefinition constraints: %s", actionDefinition);
+                log.debugf("Using ActionDefinition constraints: %s", actionDefinition);
             }
             if (ActionsValidator.validate(triggerAction, event)) {
                 for (ActionListener listener : alertsContext.getActionsListeners()) {

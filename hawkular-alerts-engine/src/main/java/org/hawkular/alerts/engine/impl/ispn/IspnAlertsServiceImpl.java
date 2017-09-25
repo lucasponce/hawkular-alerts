@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.Local;
 import javax.ejb.Stateless;
@@ -107,6 +108,7 @@ public class IspnAlertsServiceImpl implements AlertsService {
 
     IspnExpressionTagQueryParser parser;
 
+    @PostConstruct
     public void init() {
         backend = IspnCacheManager.getCacheManager().getCache("backend");
         if (backend == null) {

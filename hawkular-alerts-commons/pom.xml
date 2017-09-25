@@ -43,8 +43,7 @@
     <dependency>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-core</artifactId>
-      <scope>provided</scope>
-      <version>${version.org.infinispan.wildfly}</version>
+      <version>${version.org.infinispan.community}</version>
     </dependency>
 
   </dependencies>
