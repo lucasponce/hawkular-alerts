@@ -265,9 +265,6 @@
                   <value>${project.build.directory}/ispn</value>
                 </property>
               </systemProperties>
-              <includes>
-                <include>**/*/IspnAction*Test.java</include>
-              </includes>
               <excludes>
                 <exclude>**/*/PerfRulesEngineTest.java</exclude>
               </excludes>
