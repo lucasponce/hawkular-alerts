@@ -167,8 +167,7 @@ public class IspnAlertsServiceImpl implements AlertsService {
                                 if (isRegexp) {
                                     query.append("/").append(tag).append(TagsBridge.SEPARATOR).append(regexp).append("/");
                                 } else {
-                                    query.append("'").append(tag).append(TagsBridge.SEPARATOR).append(item)
-                                            .append("'");
+                                    query.append("'").append(tag).append(TagsBridge.SEPARATOR).append(item).append("'");
                                 }
                                 if (i + 1 < values.length) {
                                     query.append(" or ");
@@ -189,8 +188,7 @@ public class IspnAlertsServiceImpl implements AlertsService {
                             if (isRegexp) {
                                 query.append("not /").append(tag).append(TagsBridge.SEPARATOR).append(regexp).append("/");
                             } else {
-                                query.append("not '").append(tag).append(TagsBridge.SEPARATOR).append(item)
-                                        .append("'");
+                                query.append("not '").append(tag).append(TagsBridge.SEPARATOR).append(item).append("'");
                             }
                             query.append(")");
                             if (i + 1 < values.length) {

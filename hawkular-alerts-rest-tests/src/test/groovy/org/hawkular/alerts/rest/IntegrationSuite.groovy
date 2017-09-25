@@ -46,8 +46,9 @@ import org.junit.runners.Suite;
         ImportExportITest.class,
         LifecycleITest.class,
         TenantITest.class,
-      */
         TriggersITest.class
+      */
+    EventsITest.class
 ])
 class IntegrationSuite {
 
