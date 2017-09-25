@@ -45,8 +45,6 @@ import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 
-import org.hawkular.alerts.api.exception.FoundException;
-import org.hawkular.alerts.api.exception.NotFoundException;
 import org.hawkular.alerts.api.json.GroupMemberInfo;
 import org.hawkular.alerts.api.model.action.ActionDefinition;
 import org.hawkular.alerts.api.model.condition.AvailabilityCondition;
@@ -80,6 +78,8 @@ import org.hawkular.alerts.api.services.DistributedListener;
 import org.hawkular.alerts.api.services.PropertiesService;
 import org.hawkular.alerts.api.services.TriggersCriteria;
 import org.hawkular.alerts.cache.IspnCacheManager;
+import org.hawkular.alerts.engine.exception.FoundApplicationException;
+import org.hawkular.alerts.engine.exception.NotFoundApplicationException;
 import org.hawkular.alerts.engine.impl.AlertsContext;
 import org.hawkular.alerts.engine.impl.ispn.model.IspnActionDefinition;
 import org.hawkular.alerts.engine.impl.ispn.model.IspnActionPlugin;
@@ -184,7 +184,7 @@ public class IspnDefinitionsServiceImpl implements DefinitionsService {
         String pk = pk(actionDefinition);
         IspnActionDefinition found = (IspnActionDefinition) backend.get(pk);
         if (found != null) {
-            throw new FoundException(pk);
+            throw new FoundApplicationException(pk);
         }
         backend.put(pk(actionDefinition), new IspnActionDefinition(actionDefinition));
 
@@ -241,7 +241,7 @@ public class IspnDefinitionsServiceImpl implements DefinitionsService {
         try {
             deferNotifications();
 
-            // fetch the group trigger (or throw NotFoundException)
+            // fetch the group trigger (or throw NotFoundApplicationException)
             Trigger group = getTrigger(tenantId, groupId);
 
             // fetch the group conditions
@@ -331,7 +331,7 @@ public class IspnDefinitionsServiceImpl implements DefinitionsService {
         try {
             deferNotifications();
 
-            // fetch the group trigger (or throw NotFoundException)
+            // fetch the group trigger (or throw NotFoundApplicationException)
             Trigger group = getTrigger(tenantId, groupId);
 
             // fetch the group conditions and generate a dataIdMap that just uses the same tokens as found in the
@@ -387,7 +387,7 @@ public class IspnDefinitionsServiceImpl implements DefinitionsService {
             throw new IllegalArgumentException("TriggerId must be not null");
         }
 
-        // fetch the trigger (or throw NotFoundException)
+        // fetch the trigger (or throw NotFoundApplicationException)
         Trigger doomedTrigger = getTrigger(tenantId, triggerId);
         if (doomedTrigger.isGroup()) {
             throw new IllegalArgumentException("Trigger [" + tenantId + "/" + triggerId + "] is a group trigger.");
@@ -409,7 +409,7 @@ public class IspnDefinitionsServiceImpl implements DefinitionsService {
         try {
             deferNotifications();
 
-            // fetch the trigger (or throw NotFoundException)
+            // fetch the trigger (or throw NotFoundApplicationException)
             Trigger doomedTrigger = getTrigger(tenantId, groupId);
             if (!doomedTrigger.isGroup()) {
                 throw new IllegalArgumentException(
@@ -453,7 +453,7 @@ public class IspnDefinitionsServiceImpl implements DefinitionsService {
         checkTenantId(tenantId, trigger);
         String triggerId = trigger.getId();
 
-        // fetch the trigger (or throw NotFoundException)
+        // fetch the trigger (or throw NotFoundApplicationException)
         FullTrigger existingFullTrigger = getFullTrigger(tenantId, triggerId);
         Trigger existingTrigger = existingFullTrigger.getTrigger();
 
@@ -578,7 +578,7 @@ public class IspnDefinitionsServiceImpl implements DefinitionsService {
         checkTenantId(tenantId, trigger);
         String triggerId = trigger.getId();
 
-        // fetch the trigger (or throw NotFoundException)
+        // fetch the trigger (or throw NotFoundApplicationException)
         Trigger existingTrigger = getTrigger(tenantId, trigger.getId());
         if (existingTrigger.isGroup()) {
             throw new IllegalArgumentException("Trigger [" + tenantId + "/" + triggerId + "] is a group trigger.");
@@ -613,7 +613,7 @@ public class IspnDefinitionsServiceImpl implements DefinitionsService {
             checkTenantId(tenantId, groupTrigger);
             String groupId = groupTrigger.getId();
 
-            // fetch the group trigger (or throw NotFoundException)
+            // fetch the group trigger (or throw NotFoundApplicationException)
             Trigger existingGroupTrigger = getTrigger(tenantId, groupId);
             if (!existingGroupTrigger.isGroup()) {
                 throw new IllegalArgumentException(
@@ -650,7 +650,7 @@ public class IspnDefinitionsServiceImpl implements DefinitionsService {
         Set<Trigger> filteredGroupTriggers = new HashSet<>();
 
         for (String groupTriggerId : groupTriggerIds.split(",")) {
-            // fetch the group trigger (or throw NotFoundException)
+            // fetch the group trigger (or throw NotFoundApplicationException)
             Trigger existingGroupTrigger = getTrigger(tenantId, groupTriggerId.trim());
             if (!existingGroupTrigger.isGroup()) {
                 throw new IllegalArgumentException(
@@ -692,7 +692,7 @@ public class IspnDefinitionsServiceImpl implements DefinitionsService {
         Set<Trigger> filteredTriggers = new HashSet<>();
 
         for (String triggerId : triggerIds.split(",")) {
-            // fetch the trigger (or throw NotFoundException)
+            // fetch the trigger (or throw NotFoundApplicationException)
             Trigger existingTrigger = getTrigger(tenantId, triggerId.trim());
             if (existingTrigger.isGroup()) {
                 throw new IllegalArgumentException("Trigger [" + tenantId + "/" + triggerId + "] is a group trigger.");
@@ -721,7 +721,7 @@ public class IspnDefinitionsServiceImpl implements DefinitionsService {
         String pk = pkFromTriggerId(tenantId, triggerId);
         IspnTrigger found = (IspnTrigger) backend.get(pk);
         if (found == null) {
-            throw new NotFoundException(pk);
+            throw new NotFoundApplicationException(pk);
         }
         return found.getTrigger();
     }
@@ -834,7 +834,7 @@ public class IspnDefinitionsServiceImpl implements DefinitionsService {
             throw new IllegalArgumentException("TriggerId must be not null");
         }
 
-        // fetch the trigger (or throw NotFoundException)
+        // fetch the trigger (or throw NotFoundApplicationException)
         Trigger member = getTrigger(tenantId, memberId);
         if (!member.isMember()) {
             throw new IllegalArgumentException("Trigger is not a member trigger: [" + tenantId + "/" + memberId + "]");
@@ -858,7 +858,7 @@ public class IspnDefinitionsServiceImpl implements DefinitionsService {
             throw new IllegalArgumentException("TriggerId must be not null");
         }
 
-        // fetch the trigger (or throw NotFoundException)
+        // fetch the trigger (or throw NotFoundApplicationException)
         Trigger orphanMember = getTrigger(tenantId, memberId);
         if (!orphanMember.isMember()) {
             throw new IllegalArgumentException("Trigger is not a member trigger: [" + tenantId + "/" + memberId + "]");
@@ -890,7 +890,7 @@ public class IspnDefinitionsServiceImpl implements DefinitionsService {
         checkTenantId(tenantId, dampening);
 
         String triggerId = dampening.getTriggerId();
-        // fetch the trigger (or throw NotFoundException)
+        // fetch the trigger (or throw NotFoundApplicationException)
         Trigger trigger = getTrigger(tenantId, triggerId);
         if (trigger.isGroup()) {
             throw new IllegalArgumentException("Trigger [" + tenantId + "/" + triggerId + "] is a group trigger.");
@@ -918,7 +918,7 @@ public class IspnDefinitionsServiceImpl implements DefinitionsService {
             checkTenantId(tenantId, groupDampening);
 
             String groupId = groupDampening.getTriggerId();
-            // fetch the group trigger (or throw NotFoundException)
+            // fetch the group trigger (or throw NotFoundApplicationException)
             Trigger groupTrigger = getTrigger(tenantId, groupId);
             if (!groupTrigger.isGroup()) {
                 throw new IllegalArgumentException(
@@ -952,13 +952,13 @@ public class IspnDefinitionsServiceImpl implements DefinitionsService {
         Dampening dampening = null;
         try {
             dampening = getDampening(tenantId, dampeningId);
-        } catch (NotFoundException e) {
+        } catch (NotFoundApplicationException e) {
             log.debugf("Ignoring removeDampening(%s), the Dampening does not exist.", dampeningId);
             return;
         }
 
         String triggerId = dampening.getTriggerId();
-        // fetch the trigger (or throw NotFoundException)
+        // fetch the trigger (or throw NotFoundApplicationException)
         Trigger trigger = getTrigger(tenantId, triggerId);
         if (trigger.isGroup()) {
             throw new IllegalArgumentException("Trigger [" + tenantId + "/" + triggerId + "] is a group trigger.");
@@ -986,13 +986,13 @@ public class IspnDefinitionsServiceImpl implements DefinitionsService {
             Dampening groupDampening = null;
             try {
                 groupDampening = getDampening(tenantId, groupDampeningId);
-            } catch (NotFoundException e) {
+            } catch (NotFoundApplicationException e) {
                 log.debugf("Ignoring removeDampening(%s), the Dampening does not exist.", groupDampeningId);
                 return;
             }
 
             String groupId = groupDampening.getTriggerId();
-            // fetch the trigger (or throw NotFoundException)
+            // fetch the trigger (or throw NotFoundApplicationException)
             Trigger groupTrigger = getTrigger(tenantId, groupId);
             if (!groupTrigger.isGroup()) {
                 throw new IllegalArgumentException(
@@ -1029,7 +1029,7 @@ public class IspnDefinitionsServiceImpl implements DefinitionsService {
         checkTenantId(tenantId, dampening);
 
         String triggerId = dampening.getTriggerId();
-        // fetch the trigger (or throw NotFoundException)
+        // fetch the trigger (or throw NotFoundApplicationException)
         Trigger trigger = getTrigger(tenantId, triggerId);
         if (trigger.isGroup()) {
             throw new IllegalArgumentException("Trigger [" + tenantId + "/" + triggerId + "] is a group trigger.");
@@ -1057,7 +1057,7 @@ public class IspnDefinitionsServiceImpl implements DefinitionsService {
             checkTenantId(tenantId, groupDampening);
 
             String groupId = groupDampening.getTriggerId();
-            // fetch the group trigger (or throw NotFoundException)
+            // fetch the group trigger (or throw NotFoundApplicationException)
             Trigger groupTrigger = getTrigger(tenantId, groupId);
             if (!groupTrigger.isGroup()) {
                 throw new IllegalArgumentException(
@@ -1091,7 +1091,7 @@ public class IspnDefinitionsServiceImpl implements DefinitionsService {
         String pk = pkFromDampeningId(dampeningId);
         IspnDampening found = (IspnDampening) backend.get(pk);
         if (found == null) {
-            throw new NotFoundException(pk);
+            throw new NotFoundApplicationException(pk);
         }
         return found.getDampening();
     }
@@ -1223,7 +1223,7 @@ public class IspnDefinitionsServiceImpl implements DefinitionsService {
         try {
             deferNotifications();
 
-            // fetch the group trigger (or throw NotFoundException)
+            // fetch the group trigger (or throw NotFoundApplicationException)
             Trigger group = getTrigger(tenantId, groupId);
             if (!group.isGroup()) {
                 throw new IllegalArgumentException(
@@ -1390,7 +1390,7 @@ public class IspnDefinitionsServiceImpl implements DefinitionsService {
         }
         String pk = pk(actionPlugin);
         if (backend.get(pk) != null) {
-            throw new FoundException(pk);
+            throw new FoundApplicationException(pk);
         }
         backend.put(pk, new IspnActionPlugin(actionPlugin, defaultProperties));
     }
@@ -1424,7 +1424,7 @@ public class IspnDefinitionsServiceImpl implements DefinitionsService {
         String pk = pk(actionPlugin);
         IspnActionPlugin found = (IspnActionPlugin) backend.get(pk);
         if (found == null) {
-            throw new NotFoundException(pk);
+            throw new NotFoundApplicationException(pk);
         }
         found.setDefaultProperties(defaultProperties);
         backend.put(pk, found);
@@ -1508,7 +1508,7 @@ public class IspnDefinitionsServiceImpl implements DefinitionsService {
         String pk = pk(actionDefinition);
         IspnActionDefinition found = (IspnActionDefinition) backend.get(pk);
         if (found == null) {
-            throw new NotFoundException(pk);
+            throw new NotFoundApplicationException(pk);
         }
         backend.put(pk, new IspnActionDefinition(actionDefinition));
 
@@ -1855,7 +1855,7 @@ public class IspnDefinitionsServiceImpl implements DefinitionsService {
         String pk = pk(trigger);
         IspnTrigger found = (IspnTrigger) backend.get(pk);
         if (found != null) {
-            throw new FoundException(pk);
+            throw new FoundApplicationException(pk);
         }
         backend.put(pk, new IspnTrigger(trigger));
 

@@ -14,19 +14,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.hawkular.alerts.api.exception;
+package org.hawkular.alerts.engine.exception;
 
+import javax.ejb.ApplicationException;
+
+import org.hawkular.alerts.api.exception.FoundException;
 
 /**
- * Indicates a query for expected data did not return any results.
+ * Indicates a query for expected data did not return any results. Declared an {@link ApplicationException} because
+ * we don't want these to be wrapped or to rollback an ongoing transaction.
  */
-public class NotFoundException extends RuntimeException {
+@ApplicationException(rollback = false, inherited = true)
+public class FoundApplicationException extends FoundException {
     private static final long serialVersionUID = 1L;
 
-    public NotFoundException() {
+    // Default no-arg constructor required by JAXB
+    public FoundApplicationException() {
     }
 
-    public NotFoundException(String message) {
+    public FoundApplicationException(String message) {
         super(message);
     }
 }
