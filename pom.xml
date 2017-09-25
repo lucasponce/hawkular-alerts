@@ -23,7 +23,7 @@
   <parent>
     <groupId>org.hawkular</groupId>
     <artifactId>hawkular-parent</artifactId>
-    <version>56-SNAPSHOT</version>
+    <version>56</version>
   </parent>
 
   <groupId>org.hawkular.alerts</groupId>
@@ -84,7 +84,7 @@
     <version.org.drools>6.4.0.Final</version.org.drools>
     <version.org.elasticsearch.client>5.2.2</version.org.elasticsearch.client>
     <version.org.freemarker>2.3.23</version.org.freemarker>
-    <version.org.hawkular.commons>0.9.7.Final</version.org.hawkular.commons>
+    <version.org.hawkular.commons>0.9.8.Final-SNAPSHOT</version.org.hawkular.commons>
     <version.org.infinispan.community>9.0.0.Final</version.org.infinispan.community>
     <version.org.infinispan.product>8.5.0.Final</version.org.infinispan.product>
     <version.org.jboss.jboss-vfs>3.2.12.Final</version.org.jboss.jboss-vfs> <!-- match WF version -->
