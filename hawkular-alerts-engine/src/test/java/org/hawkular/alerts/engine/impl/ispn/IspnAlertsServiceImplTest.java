@@ -46,7 +46,7 @@ public class IspnAlertsServiceImplTest extends IspnBaseServiceImplTest {
 
     @BeforeClass
     public static void init() {
-        System.setProperty("hawkular.data", "./target/ispn");
+        System.setProperty("jboss.server.data.dir", "./target/ispn");
         alerts = new IspnAlertsServiceImpl();
         alerts.init();
     }

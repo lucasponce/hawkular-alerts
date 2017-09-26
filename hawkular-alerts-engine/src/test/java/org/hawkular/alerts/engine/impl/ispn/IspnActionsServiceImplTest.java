@@ -47,7 +47,7 @@ public class IspnActionsServiceImplTest extends IspnBaseServiceImplTest {
     @BeforeClass
     public static void init() {
         try {
-            System.setProperty("hawkular.data", "./target/ispn");
+            System.setProperty("jboss.server.data.dir", "./target/ispn");
 
             AlertsContext alertsContext = new AlertsContext();
 

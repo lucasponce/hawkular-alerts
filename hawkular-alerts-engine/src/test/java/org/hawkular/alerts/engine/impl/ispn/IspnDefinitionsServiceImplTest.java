@@ -56,7 +56,7 @@ public class IspnDefinitionsServiceImplTest extends IspnBaseServiceImplTest {
 
     @BeforeClass
     public static void init() {
-        System.setProperty("hawkular.data", "./target/ispn");
+        System.setProperty("jboss.server.data.dir", "./target/ispn");
         definitions = new IspnDefinitionsServiceImpl();
         definitions.init();
     }

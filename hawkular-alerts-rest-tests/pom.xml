@@ -55,13 +55,6 @@
     </dependency>
 
     <dependency>
-      <groupId>org.hawkular.commons</groupId>
-      <artifactId>hawkular-server</artifactId>
-      <version>${version.org.hawkular.commons}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
       <groupId>org.wildfly</groupId>
       <artifactId>wildfly-jms-client-bom</artifactId>
       <version>${version.org.wildfly}</version>
