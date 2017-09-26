@@ -31,8 +31,7 @@ import org.junit.runners.Suite;
  */
 @RunWith(Suite.class)
 @Suite.SuiteClasses([
-    /*
-        ActionsITest.class,
+        //ActionsITest.class,
         AlertsITest.class,
         ClusterITest.class,
         ConditionsITest.class,
@@ -43,12 +42,10 @@ import org.junit.runners.Suite;
         EventsLifecycleITest.class,
         EventsAggregationExtensionITest.class,
         GroupITest.class,
-        ImportExportITest.class,
+        //ImportExportITest.class,
         LifecycleITest.class,
-        TenantITest.class,
-        TriggersITest.class
-      */
-    EventsITest.class
+        TenantITest.class
+        //TriggersITest.class
 ])
 class IntegrationSuite {
 
