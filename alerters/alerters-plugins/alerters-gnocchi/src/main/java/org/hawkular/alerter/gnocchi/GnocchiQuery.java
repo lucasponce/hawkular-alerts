@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -130,9 +131,9 @@ public class GnocchiQuery implements Runnable {
             for (int i = 0; i < splitMetricNames.length; i++) {
                 gnocchiNames.add(splitMetricNames[i].trim());
             }
-            List rawAllMetrics = getAllMetrics();
-            for (int i = 0; i < rawAllMetrics.size(); i++) {
-                Map<String, String> metric = (Map<String, String>) rawAllMetrics.get(i);
+            List rawMetrics = getMetrics(gnocchiNames);
+            for (int i = 0; i < rawMetrics.size(); i++) {
+                Map<String, String> metric = (Map<String, String>) rawMetrics.get(i);
                 if (gnocchiNames.contains(metric.get("name"))) {
                     nameIdMetrics.put(metric.get("name"), metric.get("id"));
                 }
@@ -290,6 +291,31 @@ public class GnocchiQuery implements Runnable {
             log.errorf(e,"Error querying Gnocchi metrics %s", allMetricsUrl);
         }
         return Collections.EMPTY_LIST;
+    }
+
+    private List<Map<String, String>> getMetrics(List<String> gnocchiNames) {
+        String metricsUrl = baseUrl + "/v1/metric";
+        List<Map<String, String>> rawMetrics = new ArrayList<>();
+        if (isEmpty(gnocchiNames)) {
+            return rawMetrics;
+        }
+        for (String metricName : gnocchiNames) {
+            String metricUrl = metricsUrl + "?name=" + metricName;
+            try {
+                URL url = new URL(metricUrl);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestProperty(AUTHORIZATION, basicAuth);
+                conn.setRequestMethod(GET);
+                conn.setDoInput(true);
+                List rawMetric = JsonUtil.getMapper().readValue(conn.getInputStream(), List.class);
+                conn.disconnect();
+                log.debugf("Gnocchi Metrics found %s", rawMetric);
+                rawMetrics.addAll(rawMetric);
+            } catch (IOException e) {
+                log.errorf(e,"Error querying Gnocchi metrics %s", metricUrl);
+            }
+        }
+        return rawMetrics;
     }
 
     private List<Map<String, String>> getResourceMetrics() {
